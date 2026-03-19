@@ -57,6 +57,24 @@ const Config = (() => {
         cleaning: { label: 'ניקיון', icon: '🧹' }
     };
 
+    /* ---- קוד חדר — סנכרון מכשירים באותו בית ---- */
+    const KEY_ROOM_CODE = 'ki_room_code';
+
+    function getRoomCode() {
+        return localStorage.getItem(KEY_ROOM_CODE) || '';
+    }
+
+    function setRoomCode(code) {
+        localStorage.setItem(KEY_ROOM_CODE, (code || '').trim());
+    }
+
+    /* יצירת קוד חדר אקראי (4 ספרות) */
+    function generateRoomCode() {
+        const code = String(Math.floor(1000 + Math.random() * 9000));
+        setRoomCode(code);
+        return code;
+    }
+
     /* ---- ייצוא פומבי ---- */
     return {
         DB_NAME,
@@ -67,6 +85,9 @@ const Config = (() => {
         setStationMode,
         getDeviceName,
         setDeviceName,
-        getDeviceId
+        getDeviceId,
+        getRoomCode,
+        setRoomCode,
+        generateRoomCode
     };
 })();

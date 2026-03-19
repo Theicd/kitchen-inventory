@@ -169,6 +169,11 @@ const Products = (() => {
 
         UI.toast(`${displayName} נרשם בהצלחה!`, 'success');
 
+        /* פרסום לריילי Nostr ברקע — לא חוסם את חוויית המשתמש */
+        _publishToNostr(barcode, displayName, location, capturedImage).catch(e =>
+            console.warn('[Products] פרסום Nostr ברקע נכשל:', e)
+        );
+
         /* ניקוי טופס */
         _resetForm();
 
@@ -357,8 +362,9 @@ const Products = (() => {
 
     /* ---- הכנת מסך רישום עם ברקוד + חיפוש אוטומטי מ-API ---- */
     let _lastPreparedBarcode = null; /* מניעת קריאה כפולה */
+    function resetPrepareGuard() { _lastPreparedBarcode = null; }
     async function prepareRegister(barcode) {
-        /* מניעת קריאה כפולה לאותו ברקוד (hashchange כפול) */
+        /* מניעת קריאה כפולה לאותו ברקוד (hashchange כפול באותו ניווט) */
         if (barcode && barcode === _lastPreparedBarcode) return;
         _lastPreparedBarcode = barcode || null;
 
@@ -397,6 +403,32 @@ const Products = (() => {
         }
     }
 
+    /* ---- פרסום מוצר למאגר הקהילתי (Nostr relay + Blossom) ברקע ---- */
+    async function _publishToNostr(barcode, name, category, imageData) {
+        if (typeof NostrBridge === 'undefined' || !NostrBridge.init()) return;
+
+        let imageUrl = null;
+
+        /* העלאת תמונה לבלוסום — רק אם יש תמונה מקומית (data URL) */
+        if (imageData && imageData.startsWith('data:')) {
+            try {
+                const blob = NostrBridge.dataUrlToBlob(imageData);
+                if (blob) {
+                    imageUrl = await NostrBridge.uploadImage(blob);
+                }
+            } catch (e) {
+                console.warn('[Products] העלאת תמונה לבלוסום נכשלה:', e);
+            }
+        } else if (imageData && imageData.startsWith('http')) {
+            /* תמונה מ-API — כבר URL ציבורי */
+            imageUrl = imageData;
+        }
+
+        /* פרסום לריילי */
+        await NostrBridge.publishProduct(barcode, { name, category, image: imageUrl });
+        console.log('[Products] מוצר פורסם לריילי:', name);
+    }
+
     /* ---- הגדרת תמונה שהגיעה מ-API (לא צריך לצלם) ---- */
     function _setApiImage(imageUrl) {
         capturedImage = imageUrl;
@@ -425,6 +457,7 @@ const Products = (() => {
         deleteProduct,
         setQuickExpiry,
         loadAllProducts,
-        prepareRegister
+        prepareRegister,
+        resetPrepareGuard
     };
 })();

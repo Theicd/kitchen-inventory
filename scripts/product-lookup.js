@@ -57,75 +57,80 @@ const ProductLookup = (() => {
             }
         }
 
-        /* שלב 2: קריאה ל-Open Food Facts — גם אם יש מקומי בלי תמונה */
-        try {
-            console.log('[Lookup] מחפש ב-Open Food Facts:', barcode);
-            const url = `${OFF_API}/${barcode}.json?fields=product_name,product_name_he,brands,image_front_url,image_front_small_url`;
-            const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+        /* שלב 2: אם יש תוצאה מקטלוג מקומי — מחזירים מיד, ומעשירים ברקע (תמונה) */
+        if (localResult) {
+            _setCache(barcode, localResult);
+            /* העשרת תמונה ברקע — לא חוסם */
+            _enrichInBackground(barcode, localResult);
+            return localResult;
+        }
 
-            if (!res.ok) {
-                console.log('[Lookup] שגיאת HTTP:', res.status);
-                /* fallback לקטלוג מקומי אם ה-API נכשל */
-                if (localResult) {
-                    _setCache(barcode, localResult);
-                    return localResult;
-                }
-                return null;
-            }
+        /* שלב 3: אין תוצאה מקומית — מחפשים ברשת (ריילי + OFF במקביל) */
+        let nostrResult = null;
+        let offResult = null;
 
-            const json = await res.json();
+        const nostrPromise = (typeof NostrBridge !== 'undefined' && NostrBridge.isReady())
+            ? NostrBridge.queryProduct(barcode, 4000).catch(() => null)
+            : Promise.resolve(null);
 
-            if (json.status !== 1 || !json.product) {
-                console.log('[Lookup] מוצר לא נמצא ב-OFF');
-                /* fallback לקטלוג מקומי */
-                if (localResult) {
-                    _setCache(barcode, localResult);
-                    return localResult;
-                }
-                _setCache(barcode, { name: null, image: null, brand: null, found: false });
-                return null;
-            }
+        const offPromise = _fetchOpenFoodFacts(barcode).catch(() => null);
 
-            const p = json.product;
+        [nostrResult, offResult] = await Promise.all([nostrPromise, offPromise]);
 
-            /* שם — עדיפות לעברית מ-API, או מהקטלוג המקומי */
-            const apiName = p.product_name_he || p.product_name || '';
-            const apiBrand = p.brands || '';
-            /* תמונה — עדיפות לגרסה קטנה (יותר מהיר) */
-            const apiImage = p.image_front_small_url || p.image_front_url || '';
+        /* מיזוג: ריילי > Open Food Facts */
+        const mergedName = (nostrResult?.name) || (offResult?.name) || '';
+        const mergedImage = (nostrResult?.image) || (offResult?.image) || null;
+        const mergedCategory = (nostrResult?.category) || null;
+        const mergedBrand = (nostrResult?.brand) || (offResult?.brand) || '';
 
-            /* שם מלא — עדיפות לקטלוג מקומי (עברית מדויקת), API כגיבוי */
-            const apiFullName = apiBrand && apiName && !apiName.includes(apiBrand)
-                ? `${apiName} - ${apiBrand}`
-                : (apiName || apiBrand || '');
-
-            /* מיזוג: קטלוג מקומי = שם + קטגוריה, API = תמונה */
-            const mergedName = (localResult && localResult.name) || apiFullName;
-            const mergedImage = apiImage || null;
-            const mergedCategory = (localResult && localResult.category) || null;
-            const mergedBrand = (localResult && localResult.brand) || apiBrand;
-
-            if (!mergedName && !mergedImage) {
-                console.log('[Lookup] מוצר נמצא אבל בלי מידע שימושי');
-                if (localResult) { _setCache(barcode, localResult); return localResult; }
-                _setCache(barcode, { name: null, image: null, brand: null, found: false });
-                return null;
-            }
-
-            const result = { name: mergedName, image: mergedImage, brand: mergedBrand, category: mergedCategory, found: true };
-            _setCache(barcode, result);
-            console.log('[Lookup] נמצא:', mergedName, mergedImage ? '(+תמונה)' : '(ללא תמונה)');
-            return result;
-
-        } catch (err) {
-            console.warn('[Lookup] שגיאה:', err.message);
-            /* fallback לקטלוג מקומי אם הרשת לא זמינה */
-            if (localResult) {
-                _setCache(barcode, localResult);
-                return localResult;
-            }
+        if (!mergedName && !mergedImage) {
+            console.log('[Lookup] לא נמצא באף מקור');
+            _setCache(barcode, { name: null, image: null, brand: null, found: false });
             return null;
         }
+
+        const result = { name: mergedName, image: mergedImage, brand: mergedBrand, category: mergedCategory, found: true };
+        _setCache(barcode, result);
+        const sources = [nostrResult?.found && 'ריילי', offResult?.found && 'OFF'].filter(Boolean).join('+');
+        console.log('[Lookup] נמצא:', mergedName, mergedImage ? '(+תמונה)' : '(ללא תמונה)', `[${sources}]`);
+        return result;
+    }
+
+    /* ---- העשרת מוצר ברקע — שולף תמונה מ-API/ריילי ומעדכן cache ---- */
+    function _enrichInBackground(barcode, localResult) {
+        const nostrP = (typeof NostrBridge !== 'undefined' && NostrBridge.isReady())
+            ? NostrBridge.queryProduct(barcode, 4000).catch(() => null)
+            : Promise.resolve(null);
+        const offP = _fetchOpenFoodFacts(barcode).catch(() => null);
+
+        Promise.all([nostrP, offP]).then(([nostr, off]) => {
+            const image = nostr?.image || off?.image || null;
+            if (image) {
+                const enriched = { ...localResult, image };
+                _setCache(barcode, enriched);
+                console.log('[Lookup] העשרה ברקע:', localResult.name, '(+תמונה)');
+            }
+        });
+    }
+
+    /* ---- קריאה ל-Open Food Facts API ---- */
+    async function _fetchOpenFoodFacts(barcode) {
+        console.log('[Lookup] מחפש ב-Open Food Facts:', barcode);
+        const url = `${OFF_API}/${barcode}.json?fields=product_name,product_name_he,brands,image_front_url,image_front_small_url`;
+        const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+        if (!res.ok) return null;
+        const json = await res.json();
+        if (json.status !== 1 || !json.product) return null;
+
+        const p = json.product;
+        const apiName = p.product_name_he || p.product_name || '';
+        const apiBrand = p.brands || '';
+        const apiImage = p.image_front_small_url || p.image_front_url || '';
+        const fullName = apiBrand && apiName && !apiName.includes(apiBrand)
+            ? `${apiName} - ${apiBrand}` : (apiName || apiBrand || '');
+
+        if (!fullName && !apiImage) return null;
+        return { name: fullName, image: apiImage, brand: apiBrand, found: true, source: 'off' };
     }
 
     /* ---- ייצוא פומבי ---- */

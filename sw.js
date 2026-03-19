@@ -4,7 +4,7 @@
    סנכרון ברקע כשהרשת חוזרת
    =================================================== */
 
-const CACHE_NAME = 'kitchen-inventory-v4';
+const CACHE_NAME = 'kitchen-inventory-v6';
 
 /* רשימת קבצים סטטיים לשמירה ב-cache */
 const STATIC_ASSETS = [
@@ -24,6 +24,7 @@ const STATIC_ASSETS = [
     './scripts/scanner.js',
     './scripts/inventory.js',
     './scripts/israeli-catalog.js',
+    './scripts/nostr-bridge.js',
     './scripts/product-lookup.js',
     './scripts/products.js',
     './scripts/shortages.js',

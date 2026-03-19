@@ -322,6 +322,7 @@
             <h2 class="screen-header__title">⚙️ הגדרות תחנה</h2>
         </header>
         <div class="settings-form">
+            <!-- מצב תחנה -->
             <div class="form-group">
                 <label class="form-label">מצב תחנה</label>
                 <div class="station-picker">
@@ -329,10 +330,33 @@
                     <button class="station-btn" data-mode="exit" onclick="Config.setStationMode('exit')">📤 יציאה</button>
                     <button class="station-btn active" data-mode="mixed" onclick="Config.setStationMode('mixed')">🔀 משולב</button>
                 </div>
+                <p class="form-hint">📥 כניסה = סריקת מוצרים נכנסים &nbsp; 📤 יציאה = טלפון ליד הפח</p>
             </div>
+
+            <!-- קוד חדר — סנכרון מכשירים -->
+            <div class="form-group">
+                <label class="form-label">🔗 קוד חדר (סנכרון מכשירים)</label>
+                <div class="room-code-row">
+                    <input type="text" id="room-code-input" class="form-input form-input--code"
+                           placeholder="הזן קוד 4 ספרות" maxlength="4" inputmode="numeric"
+                           onchange="UI.onRoomCodeChange(this.value)">
+                    <button class="btn btn--small" onclick="UI.generateRoom()">🎲 צור קוד</button>
+                    <button class="btn btn--small" id="btn-sync-toggle" onclick="UI.toggleSync()">🔌 חבר</button>
+                </div>
+                <p class="form-hint">הזן אותו קוד בכל המכשירים כדי לסנכרן מלאי ביניהם</p>
+                <div id="sync-status" class="sync-status"></div>
+            </div>
+
+            <!-- שם מכשיר -->
             <div class="form-group">
                 <label class="form-label">שם מכשיר</label>
                 <input type="text" id="device-name" class="form-input" placeholder="לדוגמה: טאבלט מטבח" onchange="Config.setDeviceName(this.value)">
+            </div>
+
+            <!-- סטטוס Nostr -->
+            <div class="form-group">
+                <label class="form-label">🌐 מאגר קהילתי</label>
+                <div id="nostr-status" class="sync-status"></div>
             </div>
         </div>
     </section>
@@ -362,6 +386,9 @@
     <!-- ============================================= -->
     <!-- Scripts — טעינה מסודרת לפי תלויות             -->
     <!-- ============================================= -->
+    <!-- nostr-tools — ספרייה לחתימת אירועים וחיבור ריילי (אותה גרסה שב-SOS) -->
+    <script src="https://unpkg.com/nostr-tools@2.7.2/lib/nostr.bundle.js"></script>
+
     <script src="scripts/config.js"></script>
     <script src="scripts/store.js"></script>
     <script src="scripts/api.js"></script>
@@ -369,6 +396,7 @@
     <script src="scripts/scanner.js"></script>
     <script src="scripts/inventory.js"></script>
     <script src="scripts/israeli-catalog.js"></script>
+    <script src="scripts/nostr-bridge.js"></script>
     <script src="scripts/product-lookup.js"></script>
     <script src="scripts/products.js"></script>
     <script src="scripts/shortages.js"></script>

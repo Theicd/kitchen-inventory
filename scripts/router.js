@@ -38,7 +38,7 @@ const Router = (() => {
             onEnter: (params) => {
                 Products.prepareRegister(params);
             },
-            onLeave: () => {}
+            onLeave: () => { Products.resetPrepareGuard(); }
         },
         'shortages': {
             onEnter: () => {

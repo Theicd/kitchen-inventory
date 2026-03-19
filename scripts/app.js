@@ -33,7 +33,17 @@ const App = (() => {
             /* שלב 6: עדכון הגדרות תחנה */
             UI.updateStationUI();
 
-            /* שלב 7: אתחול באנר התקנת PWA */
+            /* שלב 7: אתחול גשר Nostr — מאגר מוצרים קהילתי (לא חוסם) */
+            try {
+                if (typeof NostrBridge !== 'undefined') {
+                    NostrBridge.init();
+                    console.log('[App] ✓ NostrBridge מוכן');
+                }
+            } catch (e) {
+                console.warn('[App] NostrBridge אתחול נכשל:', e);
+            }
+
+            /* שלב 8: אתחול באנר התקנת PWA */
             PWAInstall.init();
             console.log('[App] ✓ PWA Install מוכן');
 
