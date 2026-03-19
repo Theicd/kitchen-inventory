@@ -96,20 +96,54 @@ const ProductLookup = (() => {
         return result;
     }
 
-    /* ---- העשרת מוצר ברקע — שולף תמונה מ-API/ריילי ומעדכן cache ---- */
+    /* ---- העשרת מוצר ברקע — שולף תמונה מ-API/ריילי/CDN ומעדכן cache ---- */
     function _enrichInBackground(barcode, localResult) {
         const nostrP = (typeof NostrBridge !== 'undefined' && NostrBridge.isReady())
             ? NostrBridge.queryProduct(barcode, 4000).catch(() => null)
             : Promise.resolve(null);
         const offP = _fetchOpenFoodFacts(barcode).catch(() => null);
+        const cdnP = _tryImageCDN(barcode).catch(() => null);
 
-        Promise.all([nostrP, offP]).then(([nostr, off]) => {
-            const image = nostr?.image || off?.image || null;
+        Promise.all([nostrP, offP, cdnP]).then(function(results) {
+            const nostr = results[0], off = results[1], cdnImg = results[2];
+            const image = nostr?.image || off?.image || cdnImg || null;
             if (image) {
-                const enriched = { ...localResult, image };
+                const enriched = Object.assign({}, localResult, { image: image });
                 _setCache(barcode, enriched);
                 console.log('[Lookup] העשרה ברקע:', localResult.name, '(+תמונה)');
+                /* עדכון תצוגה אם עדיין במסך רישום */
+                var preview = document.getElementById('reg-preview');
+                if (preview && !preview.src) {
+                    preview.src = image;
+                    preview.classList.remove('hidden');
+                }
             }
+        });
+    }
+
+    /* ---- ניסיון שליפת תמונה מ-CDN סופרמרקטים ישראליים ---- */
+    function _tryImageCDN(barcode) {
+        /* רמי לוי מפרסם תמונות מוצרים ב-URL צפוי */
+        var urls = [
+            'https://static.rfrsh.co.il/supermarket/product/' + barcode + '/small.jpg',
+            'https://img.shufersal.co.il/imgs/Products_Vertical/' + barcode + '_V_large.jpg'
+        ];
+        /* מנסה לטעון תמונה — אם הצליח (200 + content-type image) מחזיר URL */
+        return new Promise(function(resolve) {
+            var tried = 0;
+            urls.forEach(function(url) {
+                fetch(url, { method: 'HEAD', mode: 'no-cors', signal: AbortSignal.timeout(4000) })
+                .then(function() {
+                    /* no-cors תמיד מחזיר opaque, ננסה לטעון כ-img */
+                    var img = new Image();
+                    img.onload = function() { if (img.naturalWidth > 1) resolve(url); };
+                    img.onerror = function() { tried++; if (tried >= urls.length) resolve(null); };
+                    img.src = url;
+                })
+                .catch(function() { tried++; if (tried >= urls.length) resolve(null); });
+            });
+            /* timeout כללי */
+            setTimeout(function() { resolve(null); }, 5000);
         });
     }
 

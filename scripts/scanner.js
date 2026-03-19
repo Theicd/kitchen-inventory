@@ -101,11 +101,10 @@ const Scanner = (() => {
         const newDiv = document.getElementById('stock-in-new');
 
         if (product) {
+            /* מוצר קיים — הצגת פרטים ואפשרות עדכון כמות */
             document.getElementById('stock-in-img').src = product.image_url || '';
             document.getElementById('stock-in-name').textContent = product.display_name;
-            /* הצגת מספר ברקוד בולט */
             document.getElementById('stock-in-barcode').textContent = `ברקוד: ${code}`;
-            /* תאריך תפוגה אם קיים */
             const expiryEl = document.getElementById('stock-in-expiry');
             if (expiryEl) expiryEl.textContent = _formatExpiryShort(product.expiry_date);
             document.getElementById('stock-in-current').textContent = product.current_quantity;
@@ -114,9 +113,12 @@ const Scanner = (() => {
             newDiv.classList.add('hidden');
             Scanner._currentProduct = product;
         } else {
-            document.getElementById('new-barcode-in').textContent = `ברקוד: ${code}`;
-            newDiv.classList.remove('hidden');
-            resultDiv.classList.add('hidden');
+            /* מוצר חדש — מעבר אוטומטי לדף רישום ללא אישור */
+            _addLog('מוצר חדש — מעבר אוטומטי לרישום: ' + code);
+            UI.toast('מוצר חדש — עובר לרישום...', 'info', 1200);
+            setTimeout(() => {
+                Router.navigate('register', code);
+            }, 600);
         }
     }
 
@@ -216,6 +218,9 @@ const Scanner = (() => {
             _handleStockInScan(code, product);
         } else if (currentMode === 'out') {
             _handleStockOutScan(code, product);
+        } else {
+            /* ברירת מחדל — ניווט ישיר לרישום */
+            Router.navigate('register', code);
         }
     }
 
