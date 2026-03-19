@@ -73,6 +73,9 @@ const Router = (() => {
             return;
         }
 
+        /* מניעת ניווט כפול לאותו מסך עם אותם פרמטרים */
+        if (screenName === currentScreen && params == currentParams) return;
+
         /* יציאה מהמסך הנוכחי */
         const current = SCREENS[currentScreen];
         if (current && current.onLeave) {
@@ -118,13 +121,14 @@ const Router = (() => {
     function init() {
         window.addEventListener('hashchange', () => {
             const hash = window.location.hash.replace('#', '');
-            if (hash && hash !== currentScreen) {
-                const parts = hash.split('/');
-                const screen = parts[0];
-                const params = parts[1] || null;
-                if (SCREENS[screen]) {
-                    navigate(screen, params);
-                }
+            if (!hash) return;
+            const parts = hash.split('/');
+            const screen = parts[0];
+            const params = parts[1] || null;
+            /* מניעת כפילות — אם כבר באותו מסך עם אותם פרמטרים, לא לנווט שוב */
+            if (screen === currentScreen && params === currentParams) return;
+            if (SCREENS[screen]) {
+                navigate(screen, params);
             }
         });
 

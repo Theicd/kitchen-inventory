@@ -117,8 +117,9 @@ const Products = (() => {
             UI.toast('נדרש שם מוצר', 'error');
             return;
         }
+        /* תמונה — לא חובה אם הגיעה מ-API (תשאר ריקה) */
         if (!capturedImage) {
-            UI.toast('נדרשת תמונת מוצר', 'error');
+            UI.toast('נדרשת תמונת מוצר — צלם או המתן', 'error');
             return;
         }
         if (!location) {
@@ -354,10 +355,58 @@ const Products = (() => {
         return `${formatted}`;
     }
 
-    /* ---- הכנת מסך רישום עם ברקוד ---- */
-    function prepareRegister(barcode) {
+    /* ---- הכנת מסך רישום עם ברקוד + חיפוש אוטומטי מ-API ---- */
+    let _lastPreparedBarcode = null; /* מניעת קריאה כפולה */
+    async function prepareRegister(barcode) {
+        /* מניעת קריאה כפולה לאותו ברקוד (hashchange כפול) */
+        if (barcode && barcode === _lastPreparedBarcode) return;
+        _lastPreparedBarcode = barcode || null;
+
         _resetForm();
         document.getElementById('reg-barcode').value = barcode || '';
+
+        if (!barcode) return;
+
+        /* חיפוש אוטומטי ב-Open Food Facts */
+        const nameInput = document.getElementById('reg-display-name');
+        nameInput.placeholder = '🔍 מחפש מוצר...';
+
+        try {
+            const result = await ProductLookup.lookup(barcode);
+            if (result && result.found) {
+                /* מילוי שם */
+                if (result.name) {
+                    nameInput.value = result.name;
+                    nameInput.placeholder = 'לדוגמה: נס קפה קלאסי';
+                    UI.toast(`✨ ${result.name}`, 'success');
+                }
+                /* מילוי תמונה מהאינטרנט */
+                if (result.image) {
+                    _setApiImage(result.image);
+                }
+                /* בחירת מיקום אוטומטית אם ידוע מהקטלוג */
+                if (result.category && Config.LOCATIONS[result.category]) {
+                    setLocation(result.category);
+                }
+            } else {
+                nameInput.placeholder = 'לא נמצא — הקלד שם ידנית';
+            }
+        } catch (err) {
+            console.warn('[Products] lookup error:', err);
+            nameInput.placeholder = 'הקלד שם מוצר';
+        }
+    }
+
+    /* ---- הגדרת תמונה שהגיעה מ-API (לא צריך לצלם) ---- */
+    function _setApiImage(imageUrl) {
+        capturedImage = imageUrl;
+        const preview = document.getElementById('reg-preview');
+        preview.src = imageUrl;
+        preview.classList.remove('hidden');
+        document.getElementById('reg-camera').classList.add('hidden');
+        document.getElementById('btn-open-camera').textContent = '📷 צלם תמונה אחרת';
+        document.getElementById('btn-capture').classList.add('hidden');
+        document.getElementById('btn-retake').classList.remove('hidden');
     }
 
     /* ---- ייצוא פומבי ---- */

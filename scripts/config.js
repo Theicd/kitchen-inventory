@@ -53,7 +53,8 @@ const Config = (() => {
     const LOCATIONS = {
         fridge: { label: 'מקרר', icon: '🧊' },
         freezer: { label: 'מקפיא', icon: '❄️' },
-        pantry: { label: 'ארון', icon: '🗄️' }
+        pantry: { label: 'ארון', icon: '🗄️' },
+        cleaning: { label: 'ניקיון', icon: '🧹' }
     };
 
     /* ---- ייצוא פומבי ---- */

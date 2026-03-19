@@ -75,21 +75,21 @@
 /* ---- סרגל סינון ---- */
 .filter-bar {
     display: flex;
-    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.35rem;
     padding: 0.5rem 0;
     margin-bottom: 0.5rem;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
 }
 
 .filter-btn {
-    padding: 0.5rem 1rem;
+    padding: 0.35rem 0.55rem;
     border-radius: var(--radius-xl);
     background: var(--glass-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     color: var(--text-secondary);
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     font-weight: 600;
     white-space: nowrap;
     border: 1px solid var(--glass-border);

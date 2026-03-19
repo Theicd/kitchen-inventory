@@ -199,6 +199,7 @@
                     <button type="button" class="loc-btn" data-loc="fridge" onclick="Products.setLocation('fridge')">🧊 מקרר</button>
                     <button type="button" class="loc-btn" data-loc="freezer" onclick="Products.setLocation('freezer')">❄️ מקפיא</button>
                     <button type="button" class="loc-btn" data-loc="pantry" onclick="Products.setLocation('pantry')">🗄️ ארון</button>
+                    <button type="button" class="loc-btn" data-loc="cleaning" onclick="Products.setLocation('cleaning')">🧹 ניקיון</button>
                 </div>
                 <input type="hidden" id="reg-location" required>
             </div>
@@ -254,6 +255,7 @@
             <button class="filter-btn" data-filter="fridge" onclick="Shortages.filter('fridge')">🧊 מקרר</button>
             <button class="filter-btn" data-filter="freezer" onclick="Shortages.filter('freezer')">❄️ מקפיא</button>
             <button class="filter-btn" data-filter="pantry" onclick="Shortages.filter('pantry')">🗄️ ארון</button>
+            <button class="filter-btn" data-filter="cleaning" onclick="Shortages.filter('cleaning')">🧹 ניקיון</button>
         </div>
 
         <div id="shortages-list-full" class="shortages-list shortages-list--full">
@@ -366,6 +368,8 @@
     <script src="scripts/sync.js"></script>
     <script src="scripts/scanner.js"></script>
     <script src="scripts/inventory.js"></script>
+    <script src="scripts/israeli-catalog.js"></script>
+    <script src="scripts/product-lookup.js"></script>
     <script src="scripts/products.js"></script>
     <script src="scripts/shortages.js"></script>
     <script src="scripts/ui.js"></script>
