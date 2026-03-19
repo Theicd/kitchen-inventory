@@ -137,6 +137,9 @@ const Products = (() => {
             return;
         }
 
+        /* תאריך תפוגה (אופציונלי) */
+        const expiryDate = document.getElementById('reg-expiry').value || null;
+
         /* יצירת מוצר */
         const product = {
             barcode: barcode,
@@ -145,7 +148,8 @@ const Products = (() => {
             image_url: capturedImage,
             location_type: location,
             target_quantity: targetQty,
-            current_quantity: initialQty
+            current_quantity: initialQty,
+            expiry_date: expiryDate
         };
 
         await Store.addProduct(product);
@@ -172,6 +176,14 @@ const Products = (() => {
 
         /* חזרה למסך קודם */
         setTimeout(() => Router.back(), 1000);
+    }
+
+    /* ---- הגדרת תאריך תפוגה מהיר ---- */
+    function setQuickExpiry(days) {
+        const d = new Date();
+        d.setDate(d.getDate() + days);
+        const iso = d.toISOString().split('T')[0];
+        document.getElementById('reg-expiry').value = iso;
     }
 
     /* ---- איפוס טופס רישום ---- */
@@ -203,11 +215,20 @@ const Products = (() => {
 
         document.getElementById('detail-img').src = product.image_url || '';
         document.getElementById('detail-name').textContent = product.display_name;
-        document.getElementById('detail-barcode').textContent = product.barcode;
+        document.getElementById('detail-barcode').textContent = `ברקוד: ${product.barcode}`;
         const locInfo = Config.LOCATIONS[product.location_type];
         document.getElementById('detail-location').textContent = locInfo ? `${locInfo.icon} ${locInfo.label}` : product.location_type;
         document.getElementById('detail-current').textContent = product.current_quantity;
         document.getElementById('detail-target').textContent = product.target_quantity;
+
+        /* תאריך תפוגה — אם קיים */
+        const expiryEl = document.getElementById('detail-expiry');
+        if (expiryEl && product.expiry_date) {
+            expiryEl.textContent = _formatExpiry(product.expiry_date);
+            expiryEl.style.display = '';
+        } else if (expiryEl) {
+            expiryEl.style.display = 'none';
+        }
     }
 
     /* ---- עריכת יעד ---- */
@@ -266,6 +287,26 @@ const Products = (() => {
         input.click();
     }
 
+    /* ---- מחיקת מוצר מרשימת כל המוצרים ---- */
+    async function deleteProduct(productId, event) {
+        /* מניעת ניווט לפרטי מוצר */
+        if (event) event.stopPropagation();
+
+        const product = await Store.getProduct(productId);
+        if (!product) return;
+
+        /* אישור מחיקה */
+        const confirmed = confirm(`למחוק את "${product.display_name}"?\n\nהמוצר יוסר מהרשימה.`);
+        if (!confirmed) return;
+
+        await Store.deleteProduct(productId);
+        UI.toast(`${product.display_name} נמחק`, 'success');
+
+        /* רענון רשימה + חוסרים */
+        loadAllProducts();
+        Shortages.refresh();
+    }
+
     /* ---- טעינת רשימת כל המוצרים ---- */
     async function loadAllProducts() {
         const products = await Store.getAllProducts();
@@ -282,16 +323,35 @@ const Products = (() => {
         emptyMsg.style.display = 'none';
         container.innerHTML = products.map(p => {
             const isShort = p.current_quantity < p.target_quantity;
+            /* תאריך תפוגה — הצגה אם קיים */
+            const expHtml = p.expiry_date
+                ? `<p class="product-mini__expiry">${_formatExpiry(p.expiry_date)}</p>`
+                : '';
             return `
                 <div class="product-mini" onclick="Router.navigate('product', '${p.id}')">
+                    <button class="product-mini__delete" onclick="Products.deleteProduct('${p.id}', event)" title="מחק מוצר">✕</button>
                     <img class="product-mini__img" src="${p.image_url || ''}" alt="${p.display_name}">
                     <p class="product-mini__name">${p.display_name}</p>
                     <p class="product-mini__qty ${isShort ? 'product-mini__qty--shortage' : ''}">
                         ${p.current_quantity} / ${p.target_quantity}
                     </p>
+                    ${expHtml}
                 </div>
             `;
         }).join('');
+    }
+
+    /* ---- עזר: פורמט תאריך תפוגה ---- */
+    function _formatExpiry(dateStr) {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        const now = new Date();
+        const diffDays = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+        const formatted = d.toLocaleDateString('he-IL', { day: 'numeric', month: 'short' });
+        if (diffDays < 0) return `⛔ פג תוקף ${formatted}`;
+        if (diffDays <= 3) return `🔴 ${formatted} (${diffDays} ימים)`;
+        if (diffDays <= 7) return `🟡 ${formatted}`;
+        return `${formatted}`;
     }
 
     /* ---- הכנת מסך רישום עם ברקוד ---- */
@@ -313,6 +373,8 @@ const Products = (() => {
         loadDetail,
         editTarget,
         changePhoto,
+        deleteProduct,
+        setQuickExpiry,
         loadAllProducts,
         prepareRegister
     };

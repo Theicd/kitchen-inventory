@@ -10,8 +10,10 @@
     width: 100%;
     border-radius: var(--radius-md);
     overflow: hidden;
-    background: #000;
+    background: rgba(0, 0, 0, 0.6);
     margin-bottom: 1rem;
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }
 
 /* ה-container שבו html5-qrcode מרנדר את המצלמה */
@@ -46,40 +48,74 @@
     margin-top: 1rem;
 }
 
-/* ---- כפתורי כמות ---- */
+/* ---- כפתורי כמות — קריסטל ---- */
 .qty-btn {
     flex: 1;
     padding: 0.85rem;
     border-radius: var(--radius-md);
     font-size: 1.05rem;
     font-weight: 700;
-    transition: transform 0.15s;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: transform 0.2s, box-shadow 0.3s, border-color 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.qty-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%);
+    pointer-events: none;
 }
 
 .qty-btn:active {
-    transform: scale(0.96);
+    transform: scale(0.95);
 }
 
 .qty-btn--add {
-    background: var(--accent-olive);
-    color: #fff;
+    background: linear-gradient(145deg, rgba(63, 185, 80, 0.3), rgba(63, 185, 80, 0.08));
+    color: var(--accent-green);
+    border-color: rgba(63, 185, 80, 0.25);
+    box-shadow: 0 2px 16px rgba(63, 185, 80, 0.1);
+}
+
+.qty-btn--add:hover {
+    border-color: rgba(63, 185, 80, 0.45);
+    box-shadow: 0 2px 24px rgba(63, 185, 80, 0.2);
 }
 
 .qty-btn--remove {
-    background: var(--accent-burgundy);
-    color: #fff;
+    background: linear-gradient(145deg, rgba(248, 81, 73, 0.3), rgba(248, 81, 73, 0.08));
+    color: var(--accent-red);
+    border-color: rgba(248, 81, 73, 0.25);
+    box-shadow: 0 2px 16px rgba(248, 81, 73, 0.1);
+}
+
+.qty-btn--remove:hover {
+    border-color: rgba(248, 81, 73, 0.45);
+    box-shadow: 0 2px 24px rgba(248, 81, 73, 0.2);
 }
 
 .qty-btn--cancel {
-    background: var(--bg-card);
+    background: var(--glass-bg);
     color: var(--text-secondary);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--glass-border);
 }
 
 .qty-btn--continue {
-    background: var(--bg-secondary);
+    background: var(--glass-bg);
     color: var(--text-secondary);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--glass-border);
+}
+
+.qty-btn--cancel:hover,
+.qty-btn--continue:hover {
+    border-color: rgba(88, 166, 255, 0.25);
+    box-shadow: 0 0 12px rgba(88, 166, 255, 0.08);
 }
 
 /* ---- הודעת מוצר חדש / לא נמצא ---- */

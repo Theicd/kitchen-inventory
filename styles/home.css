@@ -14,6 +14,7 @@
     font-size: 2rem;
     color: var(--accent-copper-light);
     margin-bottom: 0.25rem;
+    text-shadow: 0 0 30px rgba(88, 166, 255, 0.15);
 }
 
 .home-subtitle {
@@ -38,36 +39,76 @@
     border-radius: var(--radius-lg);
     font-size: 1.1rem;
     font-weight: 700;
-    transition: transform 0.15s, box-shadow 0.15s;
     min-height: 120px;
-    box-shadow: var(--shadow-soft);
+    /* קריסטל — זכוכית שקופה */
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: transform 0.2s, box-shadow 0.3s, border-color 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+/* ניצוץ עליון — שקיפות זכוכית */
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%);
+    pointer-events: none;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
 .action-btn:active {
-    transform: scale(0.97);
+    transform: scale(0.96);
 }
 
-/* כפתור כניסה — ירוק זית */
+/* כפתור כניסה — ירוק קריסטלי */
 .action-btn--in {
-    background: linear-gradient(135deg, var(--accent-olive), #4a5e2a);
-    color: var(--text-primary);
+    background: linear-gradient(145deg, rgba(46, 160, 67, 0.25), rgba(46, 160, 67, 0.08));
+    color: var(--accent-green);
+    border-color: rgba(46, 160, 67, 0.25);
+    box-shadow: 0 4px 24px rgba(46, 160, 67, 0.12), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
-/* כפתור יציאה — בורדו */
+.action-btn--in:hover {
+    border-color: rgba(46, 160, 67, 0.4);
+    box-shadow: 0 4px 32px rgba(46, 160, 67, 0.2), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+/* כפתור יציאה — אדום קריסטלי */
 .action-btn--out {
-    background: linear-gradient(135deg, var(--accent-burgundy), #6b2a2a);
-    color: var(--text-primary);
+    background: linear-gradient(145deg, rgba(218, 54, 51, 0.25), rgba(218, 54, 51, 0.08));
+    color: var(--accent-red);
+    border-color: rgba(218, 54, 51, 0.25);
+    box-shadow: 0 4px 24px rgba(218, 54, 51, 0.12), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
-/* כפתור רישום — נחושת */
+.action-btn--out:hover {
+    border-color: rgba(218, 54, 51, 0.4);
+    box-shadow: 0 4px 32px rgba(218, 54, 51, 0.2), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+/* כפתור רישום — ציאן קריסטלי */
 .action-btn--register {
-    background: linear-gradient(135deg, var(--accent-copper), #a8632e);
-    color: #fff;
+    background: linear-gradient(145deg, rgba(88, 166, 255, 0.25), rgba(88, 166, 255, 0.08));
+    color: var(--accent-cyan);
+    border: 1px solid rgba(88, 166, 255, 0.25);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     width: 100%;
     padding: 1rem;
     border-radius: var(--radius-md);
     font-size: 1.1rem;
     margin-top: 1rem;
+    box-shadow: 0 4px 24px rgba(88, 166, 255, 0.12), inset 0 1px 0 rgba(255,255,255,0.05);
+    transition: transform 0.2s, box-shadow 0.3s, border-color 0.3s;
+}
+
+.action-btn--register:hover {
+    border-color: rgba(88, 166, 255, 0.4);
+    box-shadow: 0 4px 32px rgba(88, 166, 255, 0.2);
 }
 
 .action-btn__icon {
@@ -112,16 +153,22 @@
 }
 
 .link-btn {
-    background: none;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     color: var(--text-secondary);
     font-size: 0.9rem;
-    padding: 0.5rem;
-    text-decoration: underline;
-    text-underline-offset: 3px;
+    padding: 0.55rem 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--glass-border);
+    text-decoration: none;
+    transition: all 0.25s;
 }
 
 .link-btn:hover {
     color: var(--accent-copper-light);
+    border-color: rgba(88, 166, 255, 0.25);
+    box-shadow: 0 0 12px rgba(88, 166, 255, 0.1);
 }
 
 /* ---- Screen header כללי ---- */
@@ -140,15 +187,20 @@
 }
 
 .back-btn {
-    background: var(--bg-secondary);
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     color: var(--text-secondary);
     padding: 0.5rem 0.75rem;
     border-radius: var(--radius-sm);
     font-size: 0.9rem;
+    border: 1px solid var(--glass-border);
+    transition: all 0.25s;
 }
 
 .back-btn:hover {
     background: var(--bg-hover);
+    border-color: rgba(88, 166, 255, 0.25);
 }
 
 /* ---- הגדרות תחנה ---- */
@@ -165,16 +217,19 @@
 .station-btn {
     flex: 1;
     padding: 0.75rem;
-    background: var(--bg-card);
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     color: var(--text-secondary);
     border-radius: var(--radius-sm);
-    border: 2px solid var(--border-color);
+    border: 1px solid var(--glass-border);
     font-weight: 600;
-    transition: all 0.2s;
+    transition: all 0.3s;
 }
 
 .station-btn.active {
-    border-color: var(--accent-copper);
+    border-color: rgba(88, 166, 255, 0.4);
     color: var(--accent-copper-light);
-    background: var(--bg-hover);
+    background: rgba(88, 166, 255, 0.1);
+    box-shadow: 0 0 16px rgba(88, 166, 255, 0.1);
 }

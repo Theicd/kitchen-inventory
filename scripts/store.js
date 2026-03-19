@@ -113,6 +113,16 @@ const Store = (() => {
         return _promisify(index.get(barcode));
     }
 
+    /* מחיקת מוצר (soft delete — סימון כלא-פעיל) */
+    async function deleteProduct(id) {
+        const product = await getProduct(id);
+        if (!product) return;
+        product.is_active = false;
+        product.updated_at = new Date().toISOString();
+        const store = _getStore(STORES.PRODUCTS, 'readwrite');
+        return _promisify(store.put(product));
+    }
+
     /* שליפת כל המוצרים הפעילים */
     function getAllProducts() {
         return new Promise((resolve, reject) => {
@@ -220,6 +230,7 @@ const Store = (() => {
         updateProduct,
         getProduct,
         getProductByBarcode,
+        deleteProduct,
         getAllProducts,
         getShortages,
         addTransaction,

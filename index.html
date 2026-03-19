@@ -86,6 +86,7 @@
                 <div class="product-card__info">
                     <p class="product-card__name" id="stock-in-name"></p>
                     <p class="product-card__barcode" id="stock-in-barcode"></p>
+                    <p class="product-card__expiry" id="stock-in-expiry"></p>
                     <p class="product-card__qty">כמות נוכחית: <strong id="stock-in-current">0</strong></p>
                     <p class="product-card__target">יעד: <strong id="stock-in-target">0</strong></p>
                 </div>
@@ -128,6 +129,7 @@
                 <div class="product-card__info">
                     <p class="product-card__name" id="stock-out-name"></p>
                     <p class="product-card__barcode" id="stock-out-barcode"></p>
+                    <p class="product-card__expiry" id="stock-out-expiry"></p>
                     <p class="product-card__qty">כמות נוכחית: <strong id="stock-out-current">0</strong></p>
                     <p class="product-card__target">יעד: <strong id="stock-out-target">0</strong></p>
                 </div>
@@ -211,6 +213,17 @@
                 </div>
             </div>
 
+            <!-- תאריך תפוגה (אופציונלי) -->
+            <div class="form-group">
+                <label class="form-label">תאריך תפוגה (לא חובה)</label>
+                <div class="expiry-picker">
+                    <input type="date" id="reg-expiry" class="form-input form-input--date">
+                    <button type="button" class="expiry-quick-btn" onclick="Products.setQuickExpiry(7)">שבוע</button>
+                    <button type="button" class="expiry-quick-btn" onclick="Products.setQuickExpiry(30)">חודש</button>
+                    <button type="button" class="expiry-quick-btn" onclick="Products.setQuickExpiry(90)">3 חודשים</button>
+                </div>
+            </div>
+
             <!-- כמות התחלתית -->
             <div class="form-group">
                 <label class="form-label">כמות התחלתית</label>
@@ -263,6 +276,7 @@
             <h3 id="detail-name" class="product-detail__name"></h3>
             <p id="detail-barcode" class="product-detail__barcode"></p>
             <p id="detail-location" class="product-detail__location"></p>
+            <p id="detail-expiry" class="product-detail__expiry" style="display:none"></p>
 
             <div class="detail-qty-row">
                 <div class="detail-qty-box">

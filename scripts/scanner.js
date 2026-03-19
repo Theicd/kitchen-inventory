@@ -103,14 +103,18 @@ const Scanner = (() => {
         if (product) {
             document.getElementById('stock-in-img').src = product.image_url || '';
             document.getElementById('stock-in-name').textContent = product.display_name;
-            document.getElementById('stock-in-barcode').textContent = code;
+            /* הצגת מספר ברקוד בולט */
+            document.getElementById('stock-in-barcode').textContent = `ברקוד: ${code}`;
+            /* תאריך תפוגה אם קיים */
+            const expiryEl = document.getElementById('stock-in-expiry');
+            if (expiryEl) expiryEl.textContent = _formatExpiryShort(product.expiry_date);
             document.getElementById('stock-in-current').textContent = product.current_quantity;
             document.getElementById('stock-in-target').textContent = product.target_quantity;
             resultDiv.classList.remove('hidden');
             newDiv.classList.add('hidden');
             Scanner._currentProduct = product;
         } else {
-            document.getElementById('new-barcode-in').textContent = code;
+            document.getElementById('new-barcode-in').textContent = `ברקוד: ${code}`;
             newDiv.classList.remove('hidden');
             resultDiv.classList.add('hidden');
         }
@@ -124,7 +128,11 @@ const Scanner = (() => {
         if (product) {
             document.getElementById('stock-out-img').src = product.image_url || '';
             document.getElementById('stock-out-name').textContent = product.display_name;
-            document.getElementById('stock-out-barcode').textContent = code;
+            /* הצגת מספר ברקוד בולט */
+            document.getElementById('stock-out-barcode').textContent = `ברקוד: ${code}`;
+            /* תאריך תפוגה אם קיים */
+            const expiryEl = document.getElementById('stock-out-expiry');
+            if (expiryEl) expiryEl.textContent = _formatExpiryShort(product.expiry_date);
             document.getElementById('stock-out-current').textContent = product.current_quantity;
             document.getElementById('stock-out-target').textContent = product.target_quantity;
             resultDiv.classList.remove('hidden');
@@ -134,6 +142,19 @@ const Scanner = (() => {
             notfoundDiv.classList.remove('hidden');
             resultDiv.classList.add('hidden');
         }
+    }
+
+    /* ---- עזר: פורמט תאריך תפוגה קצר ---- */
+    function _formatExpiryShort(dateStr) {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        const now = new Date();
+        const diffDays = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+        const fmt = d.toLocaleDateString('he-IL', { day: 'numeric', month: 'short' });
+        if (diffDays < 0) return `⛔ פג תוקף ${fmt}`;
+        if (diffDays <= 3) return `🔴 תפוגה: ${fmt} (${diffDays} ימים!)`;
+        if (diffDays <= 7) return `🟡 תפוגה: ${fmt}`;
+        return `תפוגה: ${fmt}`;
     }
 
     /* ---- צליל חיווי ---- */

@@ -53,17 +53,20 @@
 .photo-btn {
     flex: 1;
     padding: 0.65rem;
-    background: var(--bg-card);
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     color: var(--text-secondary);
     border-radius: var(--radius-sm);
     font-size: 0.9rem;
     font-weight: 600;
-    border: 1px solid var(--border-color);
-    transition: background 0.2s;
+    border: 1px solid var(--glass-border);
+    transition: all 0.25s;
 }
 
 .photo-btn:hover {
     background: var(--bg-hover);
+    border-color: rgba(88, 166, 255, 0.25);
 }
 
 /* ---- הצעת שם ---- */
@@ -86,20 +89,23 @@
 .loc-btn {
     flex: 1;
     padding: 0.75rem 0.5rem;
-    background: var(--bg-card);
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     color: var(--text-secondary);
     border-radius: var(--radius-md);
     font-size: 0.9rem;
     font-weight: 600;
-    border: 2px solid var(--border-color);
+    border: 1px solid var(--glass-border);
     text-align: center;
-    transition: all 0.2s;
+    transition: all 0.3s;
 }
 
 .loc-btn.active {
-    border-color: var(--accent-copper);
+    border-color: rgba(88, 166, 255, 0.4);
     color: var(--accent-copper-light);
-    background: var(--bg-hover);
+    background: rgba(88, 166, 255, 0.1);
+    box-shadow: 0 0 16px rgba(88, 166, 255, 0.1);
 }
 
 /* ---- בוחר כמות ---- */
@@ -113,18 +119,22 @@
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: var(--bg-card);
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     color: var(--text-primary);
     font-size: 1.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid var(--border-color);
-    transition: background 0.2s;
+    border: 1px solid var(--glass-border);
+    transition: all 0.25s;
 }
 
 .qty-step:hover {
     background: var(--bg-hover);
+    border-color: rgba(88, 166, 255, 0.3);
+    box-shadow: 0 0 12px rgba(88, 166, 255, 0.1);
 }
 
 .form-input--qty {
@@ -134,18 +144,37 @@
     font-weight: 700;
 }
 
-/* ---- כפתור שמירה ---- */
+/* ---- כפתור שמירה — קריסטל ---- */
 .submit-btn {
     width: 100%;
     padding: 1rem;
-    background: linear-gradient(135deg, var(--accent-copper), #a8632e);
-    color: #fff;
+    background: linear-gradient(145deg, rgba(88, 166, 255, 0.3), rgba(88, 166, 255, 0.1));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    color: var(--accent-copper-light);
+    border: 1px solid rgba(88, 166, 255, 0.3);
     border-radius: var(--radius-md);
     font-size: 1.15rem;
     font-weight: 700;
-    box-shadow: var(--shadow-medium);
-    transition: transform 0.15s;
+    box-shadow: 0 4px 24px rgba(88, 166, 255, 0.15), inset 0 1px 0 rgba(255,255,255,0.05);
+    transition: transform 0.2s, box-shadow 0.3s, border-color 0.3s;
     margin-top: 0.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.submit-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%);
+    pointer-events: none;
+}
+
+.submit-btn:hover {
+    border-color: rgba(88, 166, 255, 0.5);
+    box-shadow: 0 4px 32px rgba(88, 166, 255, 0.25), inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 .submit-btn:active {
@@ -223,16 +252,73 @@
 
 .detail-btn {
     padding: 0.75rem;
-    background: var(--bg-card);
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     color: var(--text-secondary);
     border-radius: var(--radius-md);
     font-size: 1rem;
     font-weight: 600;
-    border: 1px solid var(--border-color);
-    transition: background 0.2s;
+    border: 1px solid var(--glass-border);
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+}
+
+.detail-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 100%);
+    pointer-events: none;
 }
 
 .detail-btn:hover {
     background: var(--bg-hover);
     color: var(--text-primary);
+    border-color: rgba(88, 166, 255, 0.25);
+    box-shadow: 0 0 12px rgba(88, 166, 255, 0.08);
+}
+
+/* ---- תאריך תפוגה בפרטי מוצר ---- */
+.product-detail__expiry {
+    font-size: 0.9rem;
+    color: var(--accent-gold);
+    padding: 0.3rem 0.7rem;
+    background: rgba(224, 180, 74, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(224, 180, 74, 0.2);
+}
+
+/* ---- בורר תאריך תפוגה מהיר ---- */
+.expiry-picker {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.expiry-picker .form-input--date {
+    flex: 1;
+    min-width: 140px;
+}
+
+.expiry-quick-btn {
+    padding: 0.5rem 0.8rem;
+    background: var(--glass-bg);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--accent-gold);
+    border: 1px solid rgba(224, 180, 74, 0.2);
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s;
+}
+
+.expiry-quick-btn:hover {
+    border-color: rgba(224, 180, 74, 0.4);
+    box-shadow: 0 0 10px rgba(224, 180, 74, 0.1);
 }
