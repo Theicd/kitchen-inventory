@@ -1,0 +1,190 @@
+/* ===================================================
+   scanner.css — סגנונות מצלמה וסריקת ברקוד
+   אחראי על: אזור מצלמה, מסגרת סריקה, כפתורי כמות
+   שייך ל: #screen-stock-in, #screen-stock-out
+   =================================================== */
+
+/* ---- אזור סורק ברקוד ---- */
+.scanner-area {
+    position: relative;
+    width: 100%;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: #000;
+    margin-bottom: 1rem;
+}
+
+/* ה-container שבו html5-qrcode מרנדר את המצלמה */
+.scanner-reader {
+    width: 100%;
+    min-height: 280px;
+}
+
+/* עיצוב פנימי לאלמנטים ש html5-qrcode יוצר */
+.scanner-reader video {
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+.scanner-reader #qr-shaded-region {
+    border-color: var(--accent-copper) !important;
+}
+
+.scanner-hint {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    padding: 0.5rem;
+}
+
+/* ---- תוצאת סריקה ---- */
+.scan-result {
+    padding: 1rem 0;
+}
+
+.scan-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+/* ---- כפתורי כמות ---- */
+.qty-btn {
+    flex: 1;
+    padding: 0.85rem;
+    border-radius: var(--radius-md);
+    font-size: 1.05rem;
+    font-weight: 700;
+    transition: transform 0.15s;
+}
+
+.qty-btn:active {
+    transform: scale(0.96);
+}
+
+.qty-btn--add {
+    background: var(--accent-olive);
+    color: #fff;
+}
+
+.qty-btn--remove {
+    background: var(--accent-burgundy);
+    color: #fff;
+}
+
+.qty-btn--cancel {
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.qty-btn--continue {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+/* ---- הודעת מוצר חדש / לא נמצא ---- */
+.new-product-msg {
+    text-align: center;
+    font-size: 1.15rem;
+    color: var(--accent-gold);
+    margin-bottom: 0.5rem;
+}
+
+.new-product-barcode {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    direction: ltr;
+    margin-bottom: 1rem;
+}
+
+.error-msg {
+    text-align: center;
+    font-size: 1.1rem;
+    color: var(--accent-red);
+    margin-bottom: 1rem;
+}
+
+/* ===================================================
+   באנר התקנת PWA
+   אחראי על: הודעת התקנה במסך בית / טלפון / מחשב
+   =================================================== */
+.pwa-install-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    border-top: 2px solid var(--accent-copper);
+    padding: 1rem 1.2rem;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
+    animation: slideUpBanner 0.4s ease-out;
+}
+
+.pwa-install-banner.hidden {
+    display: none;
+}
+
+@keyframes slideUpBanner {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+.pwa-install-banner__content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.pwa-install-banner__icon {
+    font-size: 2rem;
+}
+
+.pwa-install-banner__text strong {
+    display: block;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.pwa-install-banner__text p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.15rem;
+}
+
+.pwa-install-banner__actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.pwa-install-btn {
+    background: var(--accent-copper);
+    color: #fff;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.pwa-install-btn:hover {
+    background: #d4945e;
+}
+
+.pwa-dismiss-btn {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    padding: 0.6rem 0.8rem;
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    cursor: pointer;
+}

@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QA Scanner — בדיקות סורק ברקוד</title>
+    <!-- ספריית html5-qrcode — נטענת לפני הכל -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        /* CSS variables שהסורק משתמש בהם */
+        :root {
+            --accent-copper:#c87941; --accent-gold:#d4a24e; --accent-burgundy:#7c3044;
+            --accent-olive:#4a7c3f; --accent-red:#e74c3c; --bg-card:#252525;
+            --bg-secondary:#2a2a2a; --text-primary:#e0e0e0; --text-secondary:#bbb;
+            --text-muted:#888; --border-color:#3a3a3a; --radius-md:8px; --radius-sm:4px;
+        }
+        /* ---- עיצוב דף QA סורק ---- */
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:#1a1a1a; color:#e0e0e0; font-family:system-ui,sans-serif; padding:1rem; direction:rtl; }
+        h1 { text-align:center; margin-bottom:0.5rem; font-size:1.4rem; }
+        .subtitle { text-align:center; color:#999; margin-bottom:1.5rem; font-size:0.85rem; }
+
+        /* סטטוס כללי */
+        #overall-status { text-align:center; padding:0.75rem; border-radius:8px; margin-bottom:1rem; font-weight:700; font-size:1.1rem; }
+        .status-running { background:#333; color:#ffa500; }
+        .status-pass { background:#1a3a1a; color:#4caf50; }
+        .status-fail { background:#3a1a1a; color:#f44336; }
+        .status-partial { background:#3a3a1a; color:#ff9800; }
+
+        /* סיכום מספרי */
+        .summary { display:flex; justify-content:center; gap:2rem; margin-bottom:1.5rem; }
+        .summary-item { text-align:center; }
+        .summary-item .num { font-size:1.8rem; font-weight:900; }
+        .summary-item .label { font-size:0.75rem; color:#999; }
+
+        /* כפתור הפעלה */
+        .run-btn { display:block; margin:0 auto 1.5rem; padding:0.85rem 2.5rem; background:#c87941; color:#fff; border:none; border-radius:8px; font-size:1.1rem; font-weight:700; cursor:pointer; }
+        .run-btn:hover { background:#d4945e; }
+        .run-btn:disabled { background:#555; cursor:not-allowed; }
+
+        /* קבוצות בדיקות */
+        .group { margin-bottom:1.5rem; border:1px solid #333; border-radius:8px; overflow:hidden; }
+        .group-header { padding:0.75rem 1rem; background:#252525; font-weight:700; display:flex; justify-content:space-between; }
+        .group-body { padding:0; }
+
+        /* בדיקה בודדת */
+        .test-row { display:flex; justify-content:space-between; align-items:center; padding:0.5rem 1rem; border-top:1px solid #2a2a2a; }
+        .test-row:hover { background:#252525; }
+        .test-name { flex:1; font-size:0.9rem; }
+        .test-detail { color:#999; font-size:0.75rem; margin-right:0.5rem; max-width:50%; overflow:hidden; text-overflow:ellipsis; direction:ltr; text-align:left; }
+        .test-icon { font-size:1.1rem; margin-right:0.5rem; }
+
+        /* לוג דיאגנוסטי */
+        .diag-section { margin-top:1.5rem; }
+        .diag-title { font-weight:700; margin-bottom:0.5rem; }
+        #diag-log { background:#111; border:1px solid #333; border-radius:8px; padding:0.75rem; max-height:300px; overflow-y:auto; font-family:monospace; font-size:0.8rem; line-height:1.5; direction:ltr; text-align:left; white-space:pre-wrap; }
+        .log-info { color:#8bc34a; }
+        .log-warn { color:#ff9800; }
+        .log-error { color:#f44336; }
+
+        /* כפתור סריקה חיה */
+        .live-section { margin-top:1.5rem; border:1px solid #333; border-radius:8px; padding:1rem; }
+        .live-title { font-weight:700; margin-bottom:0.75rem; }
+        #live-scanner-area { background:#000; border-radius:8px; min-height:250px; margin-bottom:0.75rem; overflow:hidden; }
+        #live-result { padding:0.5rem; color:#4caf50; font-weight:700; text-align:center; min-height:2rem; }
+        .live-btns { display:flex; gap:0.5rem; margin-bottom:0.75rem; }
+        .live-btn { flex:1; padding:0.6rem; border-radius:8px; border:none; font-weight:700; cursor:pointer; font-size:0.9rem; }
+        .live-btn--start { background:#4a7c3f; color:#fff; }
+        .live-btn--stop { background:#7c3f3f; color:#fff; }
+    </style>
+</head>
+<body>
+
+    <h1>🔍 QA Scanner — בדיקות סורק ברקוד</h1>
+    <p class="subtitle">בדיקות מקיפות: ספרייה, מצלמה, הרשאות, DOM, סריקה, fallback</p>
+
+    <div id="overall-status" class="status-running">ממתין להפעלה...</div>
+
+    <div class="summary">
+        <div class="summary-item"><div class="num" id="total-count">0</div><div class="label">סה"כ</div></div>
+        <div class="summary-item"><div class="num" id="pass-count" style="color:#4caf50">0</div><div class="label">עברו ✓</div></div>
+        <div class="summary-item"><div class="num" id="fail-count" style="color:#f44336">0</div><div class="label">נכשלו ✗</div></div>
+        <div class="summary-item"><div class="num" id="warn-count" style="color:#ff9800">0</div><div class="label">אזהרות ⚠</div></div>
+    </div>
+
+    <button class="run-btn" id="btn-run" onclick="runAllTests()">▶ הרץ את כל הבדיקות</button>
+
+    <div id="results"></div>
+
+    <!-- אזור סריקה חיה לבדיקה ידנית -->
+    <div class="live-section">
+        <div class="live-title">📷 סריקה חיה — בדיקה ידנית</div>
+        <div class="live-btns">
+            <button class="live-btn live-btn--start" onclick="startLiveScan()">הפעל מצלמה</button>
+            <button class="live-btn live-btn--stop" onclick="stopLiveScan()">עצור</button>
+        </div>
+        <div id="live-scanner-area"></div>
+        <div id="live-result"></div>
+    </div>
+
+    <!-- אזור לוג -->
+    <div class="diag-section">
+        <div class="diag-title">📋 לוג דיאגנוסטי</div>
+        <div id="diag-log"></div>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- DOM Elements — אלמנטים שהסורק צריך לעבוד   -->
+    <!-- מוסתרים מהתצוגה אבל קיימים ב-DOM           -->
+    <!-- ============================================= -->
+    <div style="display:none">
+        <!-- מסך כניסה למלאי -->
+        <section id="screen-stock-in" class="screen active">
+            <div class="scanner-area" id="scanner-area-in">
+                <div id="scanner-reader-in"></div>
+            </div>
+            <div id="stock-in-result" class="scan-result hidden">
+                <img id="stock-in-img" src="" alt="">
+                <p id="stock-in-name"></p>
+                <p id="stock-in-barcode"></p>
+                <p><strong id="stock-in-current">0</strong></p>
+                <p><strong id="stock-in-target">0</strong></p>
+            </div>
+            <div id="stock-in-new" class="scan-result hidden">
+                <p id="new-barcode-in"></p>
+            </div>
+        </section>
+
+        <!-- מסך יציאה מהמלאי -->
+        <section id="screen-stock-out" class="screen">
+            <div class="scanner-area" id="scanner-area-out">
+                <div id="scanner-reader-out"></div>
+            </div>
+            <div id="stock-out-result" class="scan-result hidden">
+                <img id="stock-out-img" src="" alt="">
+                <p id="stock-out-name"></p>
+                <p id="stock-out-barcode"></p>
+                <p><strong id="stock-out-current">0</strong></p>
+                <p><strong id="stock-out-target">0</strong></p>
+            </div>
+            <div id="stock-out-notfound" class="scan-result hidden"></div>
+        </section>
+    </div>
+
+    <!-- hidden class -->
+    <style>.hidden { display:none!important; }</style>
+
+    <!-- טעינת מודולים נדרשים -->
+    <script>
+        /* ===== Mock מינימלי של UI לצורך בדיקות ===== */
+        const UI = {
+            toast(msg, type) {
+                addDiagLog(`[UI.toast] ${type}: ${msg}`, type === 'error' ? 'error' : 'info');
+            },
+            showScreen() {},
+            updateStationUI() {}
+        };
+    </script>
+    <script src="../scripts/config.js"></script>
+    <script src="../scripts/store.js"></script>
+    <script src="../scripts/scanner.js"></script>
+
+    <script>
+    /* ===================================================
+       QA Scanner — מנוע בדיקות
+       =================================================== */
+
+    let totalTests = 0, passTests = 0, failTests = 0, warnTests = 0;
+    const resultsDiv = document.getElementById('results');
+    const diagLog = document.getElementById('diag-log');
+
+    /* ---- הוספת שורה ללוג ---- */
+    function addDiagLog(msg, level) {
+        const cls = level === 'error' ? 'log-error' : level === 'warn' ? 'log-warn' : 'log-info';
+        diagLog.innerHTML += `<span class="${cls}">${msg}</span>\n`;
+        diagLog.scrollTop = diagLog.scrollHeight;
+    }
+
+    /* ---- יצירת קבוצת בדיקות ---- */
+    function createGroup(title) {
+        const group = document.createElement('div');
+        group.className = 'group';
+        group.innerHTML = `<div class="group-header"><span>${title}</span><span class="group-count"></span></div><div class="group-body"></div>`;
+        resultsDiv.appendChild(group);
+        return { el: group, body: group.querySelector('.group-body'), pass: 0, fail: 0, total: 0 };
+    }
+
+    /* ---- הוספת תוצאת בדיקה ---- */
+    function addResult(group, name, passed, detail, isWarning) {
+        group.total++;
+        totalTests++;
+        if (passed) { group.pass++; passTests++; }
+        else if (isWarning) { warnTests++; group.pass++; }
+        else { group.fail++; failTests++; }
+
+        const icon = passed ? '✅' : (isWarning ? '⚠️' : '❌');
+        const row = document.createElement('div');
+        row.className = 'test-row';
+        row.innerHTML = `<span class="test-icon">${icon}</span><span class="test-name">${name}</span><span class="test-detail">${detail || ''}</span>`;
+        group.body.appendChild(row);
+
+        /* עדכון סיכום קבוצה */
+        group.el.querySelector('.group-count').textContent = `${group.pass}/${group.total}`;
+
+        /* עדכון סיכום כללי */
+        document.getElementById('total-count').textContent = totalTests;
+        document.getElementById('pass-count').textContent = passTests;
+        document.getElementById('fail-count').textContent = failTests;
+        document.getElementById('warn-count').textContent = warnTests;
+    }
+
+    /* ========== בדיקות ========== */
+
+    /* ---- A: בדיקות סביבה ---- */
+    function testEnvironment(group) {
+        /* A1: Secure context */
+        addResult(group, 'A1: Secure Context', window.isSecureContext, window.location.protocol);
+
+        /* A2: getUserMedia API */
+        const hasGUM = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+        addResult(group, 'A2: getUserMedia API זמין', hasGUM, hasGUM ? 'זמין' : 'חסר — מצלמה לא תעבוד');
+
+        /* A3: MediaDevices */
+        addResult(group, 'A3: navigator.mediaDevices קיים', !!navigator.mediaDevices);
+
+        /* A4: HTTPS או localhost */
+        const isLocalhost = ['localhost', '127.0.0.1', '0.0.0.0'].includes(window.location.hostname);
+        const isHTTPS = window.location.protocol === 'https:';
+        const cameraAllowed = isLocalhost || isHTTPS;
+        addResult(group, 'A4: HTTPS או localhost (חובה למצלמה)', cameraAllowed,
+            isHTTPS ? 'HTTPS ✓' : (isLocalhost ? 'localhost ✓' : `⚠ HTTP + ${window.location.hostname} — מצלמה לא תעבוד!`),
+            !cameraAllowed);
+
+        /* A5: Protocol */
+        addResult(group, 'A5: פרוטוקול נוכחי', true, window.location.protocol + '//' + window.location.host);
+    }
+
+    /* ---- B: בדיקות ספרייה ---- */
+    async function testLibrary(group) {
+        /* B1: html5-qrcode loaded */
+        const loaded = typeof Html5Qrcode !== 'undefined';
+        addResult(group, 'B1: Html5Qrcode class טעון', loaded);
+
+        /* B2: Html5QrcodeSupportedFormats */
+        const hasFormats = typeof Html5QrcodeSupportedFormats !== 'undefined';
+        addResult(group, 'B2: Html5QrcodeSupportedFormats זמין', hasFormats);
+
+        /* B3: Specific format EAN_13 */
+        if (hasFormats) {
+            const hasEAN = Html5QrcodeSupportedFormats.EAN_13 !== undefined;
+            addResult(group, 'B3: EAN_13 format קיים', hasEAN, String(Html5QrcodeSupportedFormats.EAN_13));
+        } else {
+            addResult(group, 'B3: EAN_13 format קיים', false, 'ספרייה לא טעונה');
+        }
+
+        /* B4: getCameras function */
+        if (loaded) {
+            const hasCamFunc = typeof Html5Qrcode.getCameras === 'function';
+            addResult(group, 'B4: Html5Qrcode.getCameras קיים', hasCamFunc);
+        } else {
+            addResult(group, 'B4: Html5Qrcode.getCameras קיים', false);
+        }
+
+        /* B5: Scanner module loaded */
+        addResult(group, 'B5: Scanner module טעון', typeof Scanner !== 'undefined');
+
+        /* B6: Scanner.start is function */
+        addResult(group, 'B6: Scanner.start הוא פונקציה', typeof Scanner?.start === 'function');
+
+        /* B7: Scanner.getDiagnostics */
+        addResult(group, 'B7: Scanner.getDiagnostics זמין', typeof Scanner?.getDiagnostics === 'function');
+
+        /* B8: Scanner.manualSubmit */
+        addResult(group, 'B8: Scanner.manualSubmit זמין', typeof Scanner?.manualSubmit === 'function');
+    }
+
+    /* ---- עזר: Promise עם timeout ---- */
+    function withTimeout(promise, ms, label) {
+        return Promise.race([
+            promise,
+            new Promise((_, reject) => setTimeout(() => reject(new Error(`Timeout (${ms}ms) — ${label}`)), ms))
+        ]);
+    }
+
+    /* ---- C: בדיקות מצלמה ---- */
+    async function testCamera(group) {
+        /* C1: enumerate cameras (with 5s timeout) */
+        let cameras = [];
+        let camError = null;
+        try {
+            if (typeof Html5Qrcode !== 'undefined') {
+                cameras = await withTimeout(Html5Qrcode.getCameras(), 5000, 'getCameras');
+            }
+        } catch (e) {
+            camError = e;
+        }
+
+        if (camError) {
+            const isTimeout = camError.message.includes('Timeout');
+            addResult(group, 'C1: שליפת מצלמות', false, camError.message);
+            addResult(group, 'C2: מספר מצלמות', false,
+                isTimeout ? 'timeout — ייתכן שדרושה הרשאה' : 'נכשל');
+            addResult(group, 'C3: מצלמה אחורית', false, 'לא ניתן לבדוק');
+            addDiagLog(`שגיאת מצלמה: ${camError.message}`, 'error');
+            return;
+        }
+
+        addResult(group, 'C1: שליפת מצלמות', true, `${cameras.length} מצלמות`);
+        addResult(group, 'C2: מספר מצלמות ≥ 1', cameras.length >= 1, `${cameras.length}`,
+            cameras.length === 0);
+
+        /* C3: Back camera */
+        const backCam = cameras.find(c => c.label &&
+            (c.label.toLowerCase().includes('back') || c.label.toLowerCase().includes('rear') || c.label.toLowerCase().includes('environment'))
+        );
+        addResult(group, 'C3: מצלמה אחורית זוהתה', !!backCam,
+            backCam ? backCam.label : 'לא נמצאה — תשתמש ברירת מחדל', !backCam && cameras.length > 0);
+
+        /* C4: List cameras */
+        cameras.forEach((c, i) => {
+            addResult(group, `C4.${i}: מצלמה "${c.label || 'ללא שם'}"`, true, c.id.substring(0, 20));
+            addDiagLog(`מצלמה ${i}: ${c.label || 'N/A'} [${c.id}]`, 'info');
+        });
+    }
+
+    /* ---- D: בדיקות DOM ---- */
+    function testDOM(group) {
+        /* D1: scanner-area-in */
+        addResult(group, 'D1: #scanner-area-in קיים', !!document.getElementById('scanner-area-in'));
+        /* D2: scanner-area-out */
+        addResult(group, 'D2: #scanner-area-out קיים', !!document.getElementById('scanner-area-out'));
+        /* D3: stock-in-result */
+        addResult(group, 'D3: #stock-in-result קיים', !!document.getElementById('stock-in-result'));
+        /* D4: stock-out-result */
+        addResult(group, 'D4: #stock-out-result קיים', !!document.getElementById('stock-out-result'));
+        /* D5: stock-in-new */
+        addResult(group, 'D5: #stock-in-new קיים', !!document.getElementById('stock-in-new'));
+        /* D6: stock-out-notfound */
+        addResult(group, 'D6: #stock-out-notfound קיים', !!document.getElementById('stock-out-notfound'));
+    }
+
+    /* ---- E: בדיקות הפעלת סורק ---- */
+    async function testScannerStart(group) {
+        /* E1: Start scanner — mode in (timeout 8s) */
+        addDiagLog('מפעיל Scanner.start("in")...', 'info');
+        try {
+            await withTimeout(Scanner.start('in'), 8000, 'Scanner.start');
+            const diag = Scanner.getDiagnostics();
+            addDiagLog('דיאגנוסטיקה: ' + JSON.stringify(diag, null, 2), 'info');
+
+            /* E1: Lib loaded after start */
+            addResult(group, 'E1: ספרייה נטענה אחרי start', diag.libLoaded);
+
+            /* E2: Scanner mode set */
+            addResult(group, 'E2: מצב סורק = in', diag.currentMode === 'in', diag.currentMode);
+
+            /* E3: Check if video was created or fallback shown */
+            const area = document.getElementById('scanner-area-in');
+            const hasVideo = area ? area.querySelector('video') : null;
+            const hasFallback = area ? area.querySelector('.scanner-manual-fallback') : null;
+
+            if (hasVideo) {
+                addResult(group, 'E3: אלמנט video נוצר', true, `readyState: ${hasVideo.readyState}`);
+                addResult(group, 'E4: video פעיל', !hasVideo.paused, hasVideo.paused ? 'paused' : 'playing');
+                addResult(group, 'E5: video dimensions', hasVideo.videoWidth > 0,
+                    `${hasVideo.videoWidth}x${hasVideo.videoHeight}`);
+
+                /* E6: Scanner state = scanning */
+                addResult(group, 'E6: סורק במצב scanning', diag.scanning || diag.hasScanner,
+                    diag.scanning ? 'scanning' : 'hasScanner: ' + diag.hasScanner);
+            } else if (hasFallback) {
+                addResult(group, 'E3: Fallback הקלדה ידנית מוצג', true, 'מצלמה לא זמינה — fallback פעיל', true);
+                addResult(group, 'E4: שדה קלט ידני קיים', !!document.getElementById('manual-barcode-in'));
+                addResult(group, 'E5: N/A — אין video', true, 'skip — fallback mode', true);
+                addResult(group, 'E6: N/A — אין scanner', true, 'skip — fallback mode', true);
+            } else {
+                addResult(group, 'E3: video או fallback', false, 'לא נוצר שום אלמנט — באג!');
+                addResult(group, 'E4: N/A', false, 'נכשל');
+                addResult(group, 'E5: N/A', false, 'נכשל');
+                addResult(group, 'E6: N/A', false, 'נכשל');
+            }
+
+            /* E7: Log entries exist */
+            addResult(group, 'E7: לוג דיאגנוסטי לא ריק', diag.log.length > 0, `${diag.log.length} שורות`);
+
+            /* print full log */
+            diag.log.forEach(l => {
+                const level = l.includes('[ERROR]') ? 'error' : l.includes('[WARN]') ? 'warn' : 'info';
+                addDiagLog(l, level);
+            });
+
+        } catch (err) {
+            addResult(group, 'E1: start() נכשל', false, err.message);
+            addDiagLog('שגיאה ב-start: ' + err.message, 'error');
+        }
+
+        /* E8: Stop scanner */
+        try {
+            await Scanner.stop();
+            addResult(group, 'E8: stop() הצליח', true);
+        } catch (err) {
+            addResult(group, 'E8: stop() נכשל', false, err.message);
+        }
+    }
+
+    /* ---- F: בדיקות שליחת ברקוד ידנית ---- */
+    async function testManualBarcode(group) {
+        /* F1: Init DB */
+        try {
+            await Store.init();
+            addResult(group, 'F1: IndexedDB מוכן', true);
+        } catch (e) {
+            addResult(group, 'F1: IndexedDB', false, e.message);
+            return;
+        }
+
+        /* F2: Add test product */
+        const testBarcode = '7290000099999';
+        try {
+            await Store.addProduct({
+                id: 'test-scanner-prod',
+                barcode: testBarcode,
+                display_name: 'מוצר בדיקת סורק',
+                image_url: '',
+                location: 'fridge',
+                target_quantity: 3,
+                current_quantity: 1,
+                created_at: new Date().toISOString()
+            });
+            addResult(group, 'F2: מוצר בדיקה נוצר', true, testBarcode);
+        } catch (e) {
+            /* יכול להיכשל אם כבר קיים */
+            addResult(group, 'F2: מוצר בדיקה', true, 'כבר קיים — ממשיך');
+        }
+
+        /* F3: Start scanner in 'in' mode for manual test (timeout 8s) */
+        try { await withTimeout(Scanner.start('in'), 8000, 'Scanner.start F'); } catch(e) {
+            addDiagLog('F: Scanner.start timeout/error: ' + e.message, 'warn');
+        }
+
+        /* המתנה קצרה */
+        await new Promise(r => setTimeout(r, 1000));
+
+        /* F3: Check manual input exists (might show if no camera) */
+        const area = document.getElementById('scanner-area-in');
+        let manualInput = document.getElementById('manual-barcode-in');
+
+        /* אם יש מצלמה אבל אין input ידני, ניצור בדיקה אחרת */
+        if (!manualInput) {
+            /* נבדוק שהסורק מוכן עם getDiagnostics */
+            const diag = Scanner.getDiagnostics();
+            addResult(group, 'F3: סורק פעיל (מצלמה עובדת)', diag.scanning || diag.hasScanner,
+                'מצלמה פעילה — fallback לא נדרש', true);
+
+            /* Simulate barcode detection directly */
+            addDiagLog('מדמה זיהוי ברקוד ידני דרך Store...', 'info');
+            const prod = await Store.getProductByBarcode(testBarcode);
+            addResult(group, 'F4: מוצר נמצא ב-DB לפי ברקוד', !!prod, prod ? prod.display_name : 'לא נמצא');
+            addResult(group, 'F5: שם מוצר נכון', prod?.display_name === 'מוצר בדיקת סורק',
+                prod?.display_name || '');
+        } else {
+            addResult(group, 'F3: שדה קלט ידני קיים', true);
+
+            /* F4: Submit manual barcode */
+            manualInput.value = testBarcode;
+            await Scanner.manualSubmit('in');
+
+            await new Promise(r => setTimeout(r, 500));
+
+            /* F5: Check result displayed */
+            const resultDiv = document.getElementById('stock-in-result');
+            const isVisible = resultDiv && !resultDiv.classList.contains('hidden');
+            addResult(group, 'F4: תוצאת סריקה מוצגת', isVisible);
+
+            /* F5: Check product name */
+            const nameEl = document.getElementById('stock-in-name');
+            addResult(group, 'F5: שם מוצר מוצג', nameEl?.textContent === 'מוצר בדיקת סורק',
+                nameEl?.textContent || 'ריק');
+        }
+
+        /* F6: Test unknown barcode */
+        addDiagLog('בודק ברקוד לא קיים...', 'info');
+        const unknown = await Store.getProductByBarcode('0000000000000');
+        addResult(group, 'F6: ברקוד לא קיים = undefined', unknown === undefined, String(unknown));
+
+        await Scanner.stop();
+        addResult(group, 'F7: סורק נעצר', true);
+    }
+
+    /* ---- G: בדיקות stop/resume ---- */
+    async function testStopResume(group) {
+        /* G1: getDiagnostics after stop */
+        const diag = Scanner.getDiagnostics();
+        addResult(group, 'G1: scanning = false אחרי stop', !diag.scanning, String(diag.scanning));
+        addResult(group, 'G2: hasScanner = false אחרי stop', !diag.hasScanner, String(diag.hasScanner));
+        addResult(group, 'G3: currentMode = null אחרי stop', diag.currentMode === null, String(diag.currentMode));
+    }
+
+    /* ========== הפעלה ========== */
+
+    async function runAllTests() {
+        /* איפוס */
+        totalTests = 0; passTests = 0; failTests = 0; warnTests = 0;
+        resultsDiv.innerHTML = '';
+        diagLog.innerHTML = '';
+        document.getElementById('btn-run').disabled = true;
+        document.getElementById('overall-status').className = 'status-running';
+        document.getElementById('overall-status').textContent = '🔄 מריץ בדיקות...';
+
+        addDiagLog('=== התחלת QA סורק ברקוד ===', 'info');
+        addDiagLog(`URL: ${window.location.href}`, 'info');
+        addDiagLog(`UA: ${navigator.userAgent}`, 'info');
+        addDiagLog(`Time: ${new Date().toLocaleString('he-IL')}`, 'info');
+
+        /* A — סביבה */
+        const gA = createGroup('A — סביבה (Environment)');
+        testEnvironment(gA);
+
+        /* B — ספרייה */
+        const gB = createGroup('B — ספריית html5-qrcode');
+        await testLibrary(gB);
+
+        /* C — מצלמה */
+        const gC = createGroup('C — מצלמות זמינות');
+        await testCamera(gC);
+
+        /* D — DOM */
+        const gD = createGroup('D — אלמנטי DOM');
+        testDOM(gD);
+
+        /* E — הפעלת סורק */
+        const gE = createGroup('E — הפעלת סורק');
+        await testScannerStart(gE);
+
+        /* F — ברקוד ידני */
+        const gF = createGroup('F — סריקה וברקוד ידני');
+        await testManualBarcode(gF);
+
+        /* G — Stop/Resume */
+        const gG = createGroup('G — Stop / Resume');
+        await testStopResume(gG);
+
+        /* סיכום */
+        addDiagLog(`=== סיכום: ${passTests}/${totalTests} PASS, ${failTests} FAIL, ${warnTests} WARN ===`, 'info');
+
+        const status = document.getElementById('overall-status');
+        if (failTests === 0) {
+            status.className = warnTests > 0 ? 'status-partial' : 'status-pass';
+            status.textContent = warnTests > 0
+                ? `⚠️ ${passTests}/${totalTests} עברו (${warnTests} אזהרות)`
+                : `✅ כל ${totalTests} הבדיקות עברו!`;
+        } else {
+            status.className = 'status-fail';
+            status.textContent = `❌ ${failTests} בדיקות נכשלו מתוך ${totalTests}`;
+        }
+
+        document.getElementById('btn-run').disabled = false;
+    }
+
+    /* ========== סריקה חיה ========== */
+
+    let liveScanner = null;
+
+    async function startLiveScan() {
+        const area = document.getElementById('live-scanner-area');
+        const result = document.getElementById('live-result');
+        area.innerHTML = '';
+        result.textContent = '';
+
+        const readerDiv = document.createElement('div');
+        readerDiv.id = 'live-reader';
+        area.appendChild(readerDiv);
+
+        try {
+            if (typeof Html5Qrcode === 'undefined') {
+                result.textContent = 'ספרייה לא טעונה — הרץ בדיקות קודם';
+                return;
+            }
+
+            const cameras = await Html5Qrcode.getCameras();
+            if (cameras.length === 0) {
+                result.textContent = 'אין מצלמות זמינות';
+                result.style.color = '#f44336';
+                return;
+            }
+
+            liveScanner = new Html5Qrcode('live-reader');
+            const backCam = cameras.find(c => c.label && c.label.toLowerCase().includes('back'));
+            const camId = backCam ? backCam.id : cameras[cameras.length - 1].id;
+
+            await liveScanner.start(camId, {
+                fps: 10,
+                qrbox: { width: 280, height: 120 },
+                formatsToSupport: [
+                    Html5QrcodeSupportedFormats.EAN_13,
+                    Html5QrcodeSupportedFormats.EAN_8,
+                    Html5QrcodeSupportedFormats.UPC_A,
+                    Html5QrcodeSupportedFormats.CODE_128
+                ]
+            }, (code, res) => {
+                result.textContent = `✅ ברקוד: ${code} (${res?.result?.format?.formatName || '?'})`;
+                result.style.color = '#4caf50';
+                addDiagLog(`[LIVE] ברקוד זוהה: ${code}`, 'info');
+                try { liveScanner.pause(true); } catch(e) {}
+                setTimeout(() => {
+                    try { liveScanner.resume(); } catch(e) {}
+                    result.textContent = 'ממשיך סריקה...';
+                    result.style.color = '#ff9800';
+                }, 2000);
+            }, () => {});
+
+            result.textContent = 'מצלמה פעילה — כוון ברקוד...';
+            result.style.color = '#ff9800';
+
+        } catch (e) {
+            result.textContent = 'שגיאה: ' + e.message;
+            result.style.color = '#f44336';
+            addDiagLog('[LIVE ERROR] ' + e.message, 'error');
+        }
+    }
+
+    async function stopLiveScan() {
+        if (liveScanner) {
+            try {
+                const st = liveScanner.getState();
+                if (st === 2 || st === 3) await liveScanner.stop();
+            } catch(e) {}
+            try { liveScanner.clear(); } catch(e) {}
+            liveScanner = null;
+        }
+        document.getElementById('live-result').textContent = 'נעצר';
+        document.getElementById('live-result').style.color = '#999';
+    }
+    </script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QA Runner — מלאי המטבח</title>
+    <style>
+        /* ---- QA Runner UI ---- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: #f0e6d8; padding: 1.5rem; direction: rtl; }
+        h1 { color: #c87941; margin-bottom: 0.5rem; font-size: 1.5rem; }
+        .summary { display: flex; gap: 1.5rem; margin: 1rem 0; padding: 1rem; background: #242424; border-radius: 10px; }
+        .summary-box { text-align: center; }
+        .summary-box .num { font-size: 2rem; font-weight: 700; }
+        .summary-box .label { font-size: 0.8rem; color: #b8a898; }
+        .pass .num { color: #4a8c5c; }
+        .fail .num { color: #c75050; }
+        .total .num { color: #c9a95a; }
+        .time .num { color: #c87941; }
+        .group { margin: 1.5rem 0; }
+        .group-title { font-size: 1.1rem; color: #c9a95a; border-bottom: 1px solid #3a3a3a; padding-bottom: 0.4rem; margin-bottom: 0.5rem; }
+        .test-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.6rem; border-radius: 6px; margin-bottom: 2px; font-size: 0.9rem; }
+        .test-row.pass { background: rgba(74,140,92,0.12); }
+        .test-row.fail { background: rgba(199,80,80,0.15); }
+        .badge { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; }
+        .badge.pass { background: #4a8c5c; color: #fff; }
+        .badge.fail { background: #c75050; color: #fff; }
+        .test-name { flex: 1; }
+        .test-detail { font-size: 0.75rem; color: #7a6e62; }
+        #status { font-size: 1rem; color: #c87941; margin: 1rem 0; }
+        button { padding: 0.8rem 2rem; background: #c87941; color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; margin: 0.5rem 0; }
+        button:hover { background: #d4945e; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <h1>🧪 QA Runner — מלאי המטבח</h1>
+    <p id="status">לחץ להרצת בדיקות</p>
+
+    <button id="btn-run" onclick="runAllTests()">▶ הרץ את כל הבדיקות</button>
+
+    <!-- סיכום -->
+    <div class="summary" id="summary" style="display:none">
+        <div class="summary-box total"><div class="num" id="sum-total">0</div><div class="label">סה"כ</div></div>
+        <div class="summary-box pass"><div class="num" id="sum-pass">0</div><div class="label">עברו ✓</div></div>
+        <div class="summary-box fail"><div class="num" id="sum-fail">0</div><div class="label">נכשלו ✗</div></div>
+        <div class="summary-box time"><div class="num" id="sum-time">0</div><div class="label">שניות</div></div>
+    </div>
+
+    <!-- תוצאות מפורטות -->
+    <div id="results"></div>
+
+    <!-- ===== טעינת קוד המערכת ===== -->
+    <script src="../scripts/config.js"></script>
+    <script src="../scripts/store.js"></script>
+    <script src="../scripts/api.js"></script>
+    <script src="../scripts/sync.js"></script>
+    <script src="../scripts/scanner.js"></script>
+    <script src="../scripts/inventory.js"></script>
+    <script src="../scripts/products.js"></script>
+    <script src="../scripts/shortages.js"></script>
+    <script src="../scripts/ui.js"></script>
+    <script src="../scripts/router.js"></script>
+
+    <!-- ===== טעינת בדיקות ===== -->
+    <script src="unit/test-config.js"></script>
+    <script src="unit/test-store.js"></script>
+    <script src="unit/test-inventory.js"></script>
+    <script src="integration/test-flows.js"></script>
+
+    <script>
+    /* ===================================================
+       QA Runner — מריץ את כל קבוצות הבדיקות ומציג תוצאות
+       =================================================== */
+
+    /* Override Router.currentParams לצורך בדיקות */
+    Object.defineProperty(Router, 'currentParams', {
+        get() { return Router._testOverrideParams || null; },
+        configurable: true
+    });
+
+    /* Mock toast כדי לא להפריע */
+    UI.toast = function(msg, type) { console.log(`[TOAST:${type}] ${msg}`); };
+    /* Mock Scanner.resume */
+    Scanner.resume = function() {};
+
+    /* Mock Shortages.refresh שלא ייכשל על חוסר DOM */
+    const _origRefresh = Shortages.refresh;
+    Shortages.refresh = async function() {
+        try { await _origRefresh(); } catch(e) { /* ignore DOM errors in tests */ }
+    };
+
+    /* עזר: מחיקת DB עם Promise */
+    function deleteDB(name) {
+        return new Promise((resolve) => {
+            const req = indexedDB.deleteDatabase(name);
+            req.onsuccess = () => resolve(true);
+            req.onerror = () => resolve(false);
+            req.onblocked = () => resolve(false);
+            setTimeout(resolve, 1000); /* timeout fallback */
+        });
+    }
+
+    async function runAllTests() {
+        const btn = document.getElementById('btn-run');
+        btn.disabled = true;
+        document.getElementById('status').textContent = '⏳ מריץ בדיקות...';
+        document.getElementById('results').innerHTML = '';
+
+        const start = Date.now();
+
+        /* ניקוי DB + אתחול חדש */
+        await deleteDB(Config.DB_NAME);
+        await new Promise(r => setTimeout(r, 200));
+        await Store.init();
+        Sync.init();
+
+        /* הרצת קבוצות */
+        const groups = [
+            { name: 'A — Config (הגדרות)', runner: TestConfig },
+            { name: 'B — Store (IndexedDB)', runner: TestStore },
+            { name: 'C — Inventory (מלאי)', runner: TestInventory },
+            { name: 'D — Integration (זרימות)', runner: TestFlows }
+        ];
+
+        let allResults = [];
+
+        for (const group of groups) {
+            try {
+                const groupResults = await group.runner.runAll();
+                allResults.push({ name: group.name, results: groupResults });
+            } catch (e) {
+                allResults.push({ name: group.name, results: [{ name: 'CRASH', pass: false, detail: e.message }] });
+            }
+        }
+
+        /* חישוב סיכום */
+        const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+        let totalPass = 0, totalFail = 0, totalCount = 0;
+        allResults.forEach(g => g.results.forEach(r => {
+            totalCount++;
+            r.pass ? totalPass++ : totalFail++;
+        }));
+
+        /* הצגת סיכום */
+        document.getElementById('summary').style.display = 'flex';
+        document.getElementById('sum-total').textContent = totalCount;
+        document.getElementById('sum-pass').textContent = totalPass;
+        document.getElementById('sum-fail').textContent = totalFail;
+        document.getElementById('sum-time').textContent = elapsed;
+
+        /* הצגת תוצאות מפורטות */
+        let html = '';
+        allResults.forEach(group => {
+            const gPass = group.results.filter(r => r.pass).length;
+            const gTotal = group.results.length;
+            html += `<div class="group">`;
+            html += `<div class="group-title">${group.name} — ${gPass}/${gTotal}</div>`;
+            group.results.forEach(r => {
+                html += `<div class="test-row ${r.pass ? 'pass' : 'fail'}">`;
+                html += `<div class="badge ${r.pass ? 'pass' : 'fail'}">${r.pass ? '✓' : '✗'}</div>`;
+                html += `<div class="test-name">${r.name}</div>`;
+                if (r.detail) html += `<div class="test-detail">${r.detail}</div>`;
+                html += `</div>`;
+            });
+            html += `</div>`;
+        });
+        document.getElementById('results').innerHTML = html;
+
+        /* סטטוס סופי */
+        const verdict = totalFail === 0 ? '✅ כל הבדיקות עברו!' : `⚠️ ${totalFail} בדיקות נכשלו`;
+        document.getElementById('status').textContent = `${verdict} (${elapsed}s)`;
+        btn.disabled = false;
+
+        console.log(`\n=== QA RESULTS: ${totalPass}/${totalCount} PASS | ${totalFail} FAIL | ${elapsed}s ===\n`);
+    }
+    </script>
+</body>
+</html>

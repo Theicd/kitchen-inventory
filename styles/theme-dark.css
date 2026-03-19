@@ -1,0 +1,146 @@
+/* ===================================================
+   theme-dark.css — ערכת צבעים כהה קולינרית
+   אחראי על: צבעים, גוונים, אווירה מטבח/מסעדה
+   שייך ל: כל המסכים
+   =================================================== */
+
+:root {
+    /* ---- רקעים ---- */
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #242424;
+    --bg-card: #2a2a2a;
+    --bg-input: #333333;
+    --bg-hover: #383838;
+
+    /* ---- טקסט ---- */
+    --text-primary: #f0e6d8;
+    --text-secondary: #b8a898;
+    --text-muted: #7a6e62;
+
+    /* ---- Accent — נחושת, זהב, בורדו, זית ---- */
+    --accent-copper: #c87941;
+    --accent-gold: #c9a95a;
+    --accent-burgundy: #8b3a3a;
+    --accent-olive: #5a6e3a;
+    --accent-copper-light: #d4945e;
+    --accent-green: #4a8c5c;
+    --accent-red: #c75050;
+
+    /* ---- גבולות ---- */
+    --border-color: #3a3a3a;
+    --border-light: #444444;
+
+    /* ---- צללים ---- */
+    --shadow-soft: 0 2px 8px rgba(0,0,0,0.3);
+    --shadow-medium: 0 4px 16px rgba(0,0,0,0.4);
+
+    /* ---- רדיוסים ---- */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+/* ---- Toast צבעים ---- */
+.toast--success {
+    background: var(--accent-green);
+    color: #fff;
+}
+
+.toast--error {
+    background: var(--accent-red);
+    color: #fff;
+}
+
+.toast--info {
+    background: var(--accent-copper);
+    color: #fff;
+}
+
+/* ---- קלט ---- */
+.form-input {
+    background: var(--bg-input);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    width: 100%;
+    font-size: 1.05rem;
+    transition: border-color 0.2s;
+}
+
+.form-input:focus {
+    border-color: var(--accent-copper);
+}
+
+.form-input::placeholder {
+    color: var(--text-muted);
+}
+
+.form-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 0.4rem;
+    display: block;
+}
+
+/* ---- כרטיס מוצר ---- */
+.product-card {
+    display: flex;
+    gap: 1rem;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    box-shadow: var(--shadow-soft);
+}
+
+.product-card__img {
+    width: 72px;
+    height: 72px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    background: var(--bg-secondary);
+}
+
+.product-card__name {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.product-card__barcode {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    direction: ltr;
+    text-align: right;
+}
+
+.product-card__qty,
+.product-card__target {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+/* ---- Empty state ---- */
+.empty-state {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 2rem 1rem;
+    font-size: 1rem;
+}
+
+/* ---- סלקציה ---- */
+::selection {
+    background: var(--accent-copper);
+    color: #fff;
+}
+
+/* ---- Scrollbar (Chrome) ---- */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }

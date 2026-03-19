@@ -1,0 +1,180 @@
+/* ===================================================
+   home.css — סגנונות מסך בית
+   אחראי על: כותרת, כפתורי כניסה/יציאה, רשימת חוסרים
+   שייך ל: #screen-home
+   =================================================== */
+
+/* ---- כותרת עליונה ---- */
+.home-header {
+    text-align: center;
+    padding: 1.5rem 0 1rem;
+}
+
+.home-title {
+    font-size: 2rem;
+    color: var(--accent-copper-light);
+    margin-bottom: 0.25rem;
+}
+
+.home-subtitle {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+/* ---- כפתורי פעולה מרכזיים ---- */
+.home-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 1rem;
+    border-radius: var(--radius-lg);
+    font-size: 1.1rem;
+    font-weight: 700;
+    transition: transform 0.15s, box-shadow 0.15s;
+    min-height: 120px;
+    box-shadow: var(--shadow-soft);
+}
+
+.action-btn:active {
+    transform: scale(0.97);
+}
+
+/* כפתור כניסה — ירוק זית */
+.action-btn--in {
+    background: linear-gradient(135deg, var(--accent-olive), #4a5e2a);
+    color: var(--text-primary);
+}
+
+/* כפתור יציאה — בורדו */
+.action-btn--out {
+    background: linear-gradient(135deg, var(--accent-burgundy), #6b2a2a);
+    color: var(--text-primary);
+}
+
+/* כפתור רישום — נחושת */
+.action-btn--register {
+    background: linear-gradient(135deg, var(--accent-copper), #a8632e);
+    color: #fff;
+    width: 100%;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    font-size: 1.1rem;
+    margin-top: 1rem;
+}
+
+.action-btn__icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.action-btn__label {
+    font-size: 1.05rem;
+}
+
+/* ---- חוסרים — אזור תחתון ---- */
+.home-shortages {
+    margin-top: 1rem;
+    flex: 1;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--accent-gold);
+    font-size: 1.15rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+}
+
+.section-title__arrow {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+}
+
+/* ---- Footer — קישורים תחתונים ---- */
+.home-footer {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    margin-top: 1rem;
+}
+
+.link-btn {
+    background: none;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    padding: 0.5rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.link-btn:hover {
+    color: var(--accent-copper-light);
+}
+
+/* ---- Screen header כללי ---- */
+.screen-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1rem;
+}
+
+.screen-header__title {
+    font-size: 1.25rem;
+    color: var(--accent-copper-light);
+}
+
+.back-btn {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+}
+
+.back-btn:hover {
+    background: var(--bg-hover);
+}
+
+/* ---- הגדרות תחנה ---- */
+.settings-form {
+    padding: 1rem 0;
+}
+
+.station-picker {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.station-btn {
+    flex: 1;
+    padding: 0.75rem;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--border-color);
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.station-btn.active {
+    border-color: var(--accent-copper);
+    color: var(--accent-copper-light);
+    background: var(--bg-hover);
+}

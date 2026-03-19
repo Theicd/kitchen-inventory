@@ -1,0 +1,238 @@
+/* ===================================================
+   product.css — סגנונות רישום מוצר + פרטי מוצר
+   אחראי על: טופס רישום, צילום, בחירת מיקום, פרטים
+   שייך ל: #screen-register, #screen-product
+   =================================================== */
+
+/* ---- טופס רישום ---- */
+.register-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 0.5rem 0;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+/* ---- אזור צילום ---- */
+.photo-area {
+    width: 100%;
+    aspect-ratio: 4/3;
+    max-height: 220px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed var(--border-color);
+}
+
+.reg-camera {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.reg-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.photo-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.photo-btn {
+    flex: 1;
+    padding: 0.65rem;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: 1px solid var(--border-color);
+    transition: background 0.2s;
+}
+
+.photo-btn:hover {
+    background: var(--bg-hover);
+}
+
+/* ---- הצעת שם ---- */
+.suggested-name {
+    background: var(--bg-card);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    color: var(--accent-gold);
+    font-style: italic;
+    direction: ltr;
+    text-align: right;
+}
+
+/* ---- בחירת מיקום ---- */
+.location-picker {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.loc-btn {
+    flex: 1;
+    padding: 0.75rem 0.5rem;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: 2px solid var(--border-color);
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.loc-btn.active {
+    border-color: var(--accent-copper);
+    color: var(--accent-copper-light);
+    background: var(--bg-hover);
+}
+
+/* ---- בוחר כמות ---- */
+.qty-picker {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.qty-step {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    transition: background 0.2s;
+}
+
+.qty-step:hover {
+    background: var(--bg-hover);
+}
+
+.form-input--qty {
+    width: 80px;
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+/* ---- כפתור שמירה ---- */
+.submit-btn {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, var(--accent-copper), #a8632e);
+    color: #fff;
+    border-radius: var(--radius-md);
+    font-size: 1.15rem;
+    font-weight: 700;
+    box-shadow: var(--shadow-medium);
+    transition: transform 0.15s;
+    margin-top: 0.5rem;
+}
+
+.submit-btn:active {
+    transform: scale(0.97);
+}
+
+/* ===== פרטי מוצר ===== */
+.product-detail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+}
+
+.product-detail__img {
+    width: 120px;
+    height: 120px;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+    background: var(--bg-secondary);
+    box-shadow: var(--shadow-medium);
+}
+
+.product-detail__name {
+    font-size: 1.4rem;
+    color: var(--text-primary);
+    text-align: center;
+}
+
+.product-detail__barcode {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    direction: ltr;
+}
+
+.product-detail__location {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+/* ---- שורת כמויות ---- */
+.detail-qty-row {
+    display: flex;
+    gap: 2rem;
+    margin: 0.5rem 0;
+}
+
+.detail-qty-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.detail-qty-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.detail-qty-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent-copper-light);
+}
+
+/* ---- כפתורי פעולה ---- */
+.detail-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+.detail-btn {
+    padding: 0.75rem;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    border: 1px solid var(--border-color);
+    transition: background 0.2s;
+}
+
+.detail-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}

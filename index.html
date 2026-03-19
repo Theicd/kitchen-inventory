@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a1a1a">
+    <meta name="description" content="מערכת מלאי מטבח ביתית — ניהול מוצרים ארוזים עם ברקוד">
+    <title>מלאי המטבח</title>
+
+    <!-- PWA manifest -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+
+    <!-- === CSS — ערכת עיצוב כהה קולינרית === -->
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/theme-dark.css">
+    <link rel="stylesheet" href="styles/home.css">
+    <link rel="stylesheet" href="styles/scanner.css">
+    <link rel="stylesheet" href="styles/list.css">
+    <link rel="stylesheet" href="styles/product.css">
+</head>
+<body>
+
+    <!-- ============================================= -->
+    <!-- מסך בית — HOME SCREEN                        -->
+    <!-- שני כפתורים מרכזיים + רשימת חוסרים           -->
+    <!-- ============================================= -->
+    <section id="screen-home" class="screen active">
+        <!-- כותרת עליונה -->
+        <header class="home-header">
+            <h1 class="home-title">🍽️ מלאי המטבח</h1>
+            <p class="home-subtitle">ניהול פשוט של כניסה / יציאה</p>
+        </header>
+
+        <!-- כפתורי פעולה מרכזיים -->
+        <div class="home-actions">
+            <button id="btn-stock-in" class="action-btn action-btn--in" onclick="Router.navigate('stock-in')">
+                <span class="action-btn__icon">📥</span>
+                <span class="action-btn__label">כניסה למלאי</span>
+            </button>
+            <button id="btn-stock-out" class="action-btn action-btn--out" onclick="Router.navigate('stock-out')">
+                <span class="action-btn__icon">📤</span>
+                <span class="action-btn__label">יציאה מהמלאי</span>
+            </button>
+        </div>
+
+        <!-- רשימת חוסרים — תצוגה מקוצרת במסך הבית -->
+        <div class="home-shortages">
+            <h2 class="section-title" onclick="Router.navigate('shortages')">
+                מוצרים חסרים
+                <span class="section-title__arrow">←</span>
+            </h2>
+            <div id="shortages-list-home" class="shortages-list">
+                <!-- יתמלא דינמית ע"י JS -->
+                <p class="empty-state" id="no-shortages-home">אין כרגע מוצרים חסרים ✓</p>
+            </div>
+        </div>
+
+        <!-- כפתור ניהול מוצרים -->
+        <footer class="home-footer">
+            <button class="link-btn" onclick="Router.navigate('all-products')">📋 כל המוצרים</button>
+            <button class="link-btn" id="btn-station-settings" onclick="Router.navigate('settings')">⚙️ הגדרות תחנה</button>
+        </footer>
+    </section>
+
+    <!-- ============================================= -->
+    <!-- מסך כניסה למלאי — STOCK IN                    -->
+    <!-- סריקת ברקוד + הוספת כמות                      -->
+    <!-- ============================================= -->
+    <section id="screen-stock-in" class="screen">
+        <header class="screen-header">
+            <button class="back-btn" onclick="Router.navigate('home')">→ חזרה</button>
+            <h2 class="screen-header__title">📥 כניסה למלאי</h2>
+        </header>
+
+        <!-- אזור סורק ברקוד — html5-qrcode מנהל את המצלמה בעצמו -->
+        <div class="scanner-area" id="scanner-area-in">
+            <div id="scanner-reader-in" class="scanner-reader"></div>
+            <p class="scanner-hint">כוון את הברקוד למצלמה</p>
+        </div>
+
+        <!-- תוצאת סריקה — מוצר קיים -->
+        <div id="stock-in-result" class="scan-result hidden">
+            <div class="product-card">
+                <img id="stock-in-img" class="product-card__img" src="" alt="תמונת מוצר">
+                <div class="product-card__info">
+                    <p class="product-card__name" id="stock-in-name"></p>
+                    <p class="product-card__barcode" id="stock-in-barcode"></p>
+                    <p class="product-card__qty">כמות נוכחית: <strong id="stock-in-current">0</strong></p>
+                    <p class="product-card__target">יעד: <strong id="stock-in-target">0</strong></p>
+                </div>
+            </div>
+            <div class="scan-actions">
+                <button class="qty-btn qty-btn--add" id="btn-add-1" onclick="Inventory.stockIn(1)">הוסף 1</button>
+                <button class="qty-btn qty-btn--add" id="btn-add-2" onclick="Inventory.stockIn(2)">הוסף 2</button>
+                <button class="qty-btn qty-btn--continue" onclick="Scanner.resume('in')">המשך סריקה</button>
+            </div>
+        </div>
+
+        <!-- תוצאת סריקה — מוצר חדש -->
+        <div id="stock-in-new" class="scan-result hidden">
+            <p class="new-product-msg">מוצר לא נמצא במערכת</p>
+            <p class="new-product-barcode" id="new-barcode-in"></p>
+            <button class="action-btn action-btn--register" onclick="Router.navigate('register', Scanner.lastBarcode)">רישום מוצר חדש</button>
+        </div>
+    </section>
+
+    <!-- ============================================= -->
+    <!-- מסך יציאה מהמלאי — STOCK OUT                  -->
+    <!-- סריקת ברקוד + הורדת כמות                      -->
+    <!-- ============================================= -->
+    <section id="screen-stock-out" class="screen">
+        <header class="screen-header">
+            <button class="back-btn" onclick="Router.navigate('home')">→ חזרה</button>
+            <h2 class="screen-header__title">📤 יציאה מהמלאי</h2>
+        </header>
+
+        <!-- אזור סורק ברקוד — html5-qrcode מנהל את המצלמה בעצמו -->
+        <div class="scanner-area" id="scanner-area-out">
+            <div id="scanner-reader-out" class="scanner-reader"></div>
+            <p class="scanner-hint">כוון את הברקוד למצלמה</p>
+        </div>
+
+        <!-- תוצאת סריקה — מוצר נמצא -->
+        <div id="stock-out-result" class="scan-result hidden">
+            <div class="product-card">
+                <img id="stock-out-img" class="product-card__img" src="" alt="תמונת מוצר">
+                <div class="product-card__info">
+                    <p class="product-card__name" id="stock-out-name"></p>
+                    <p class="product-card__barcode" id="stock-out-barcode"></p>
+                    <p class="product-card__qty">כמות נוכחית: <strong id="stock-out-current">0</strong></p>
+                    <p class="product-card__target">יעד: <strong id="stock-out-target">0</strong></p>
+                </div>
+            </div>
+            <div class="scan-actions">
+                <button class="qty-btn qty-btn--remove" id="btn-remove-1" onclick="Inventory.stockOut(1)">הורד 1</button>
+                <button class="qty-btn qty-btn--cancel" onclick="Scanner.resume('out')">בטל</button>
+            </div>
+        </div>
+
+        <!-- מוצר לא נמצא -->
+        <div id="stock-out-notfound" class="scan-result hidden">
+            <p class="error-msg">מוצר לא נמצא במערכת</p>
+            <button class="qty-btn qty-btn--continue" onclick="Scanner.resume('out')">המשך סריקה</button>
+        </div>
+    </section>
+
+    <!-- ============================================= -->
+    <!-- מסך רישום מוצר חדש — REGISTER                 -->
+    <!-- ברקוד + צילום + שם + מיקום + יעד              -->
+    <!-- ============================================= -->
+    <section id="screen-register" class="screen">
+        <header class="screen-header">
+            <button class="back-btn" onclick="Router.back()">→ חזרה</button>
+            <h2 class="screen-header__title">📝 רישום מוצר חדש</h2>
+        </header>
+
+        <form id="register-form" class="register-form" onsubmit="Products.register(event)">
+            <!-- ברקוד — לא ניתן לעריכה -->
+            <div class="form-group">
+                <label class="form-label">ברקוד</label>
+                <input type="text" id="reg-barcode" class="form-input" readonly>
+            </div>
+
+            <!-- צילום תמונה -->
+            <div class="form-group">
+                <label class="form-label">תמונת מוצר (חובה)</label>
+                <div class="photo-area" id="reg-photo-area">
+                    <video id="reg-camera" class="reg-camera hidden" autoplay playsinline></video>
+                    <img id="reg-preview" class="reg-preview hidden" alt="תצוגה מקדימה">
+                    <canvas id="reg-canvas" class="hidden"></canvas>
+                </div>
+                <div class="photo-actions">
+                    <button type="button" class="photo-btn" id="btn-open-camera" onclick="Products.openCamera()">📷 פתח מצלמה</button>
+                    <button type="button" class="photo-btn hidden" id="btn-capture" onclick="Products.capturePhoto()">📸 צלם</button>
+                    <button type="button" class="photo-btn hidden" id="btn-retake" onclick="Products.retakePhoto()">🔄 צלם שוב</button>
+                </div>
+            </div>
+
+            <!-- הצעת שם מתוך האריזה -->
+            <div class="form-group" id="suggested-name-group" style="display:none">
+                <label class="form-label">שם מוצע מהאריזה</label>
+                <p id="reg-suggested-name" class="suggested-name"></p>
+                <button type="button" class="link-btn" onclick="Products.useSuggestedName()">השתמש בשם זה</button>
+            </div>
+
+            <!-- שם מוצר -->
+            <div class="form-group">
+                <label class="form-label">שם להצגה (חובה)</label>
+                <input type="text" id="reg-display-name" class="form-input" placeholder="לדוגמה: נס קפה קלאסי" required>
+            </div>
+
+            <!-- מיקום -->
+            <div class="form-group">
+                <label class="form-label">מיקום (חובה)</label>
+                <div class="location-picker">
+                    <button type="button" class="loc-btn" data-loc="fridge" onclick="Products.setLocation('fridge')">🧊 מקרר</button>
+                    <button type="button" class="loc-btn" data-loc="freezer" onclick="Products.setLocation('freezer')">❄️ מקפיא</button>
+                    <button type="button" class="loc-btn" data-loc="pantry" onclick="Products.setLocation('pantry')">🗄️ ארון</button>
+                </div>
+                <input type="hidden" id="reg-location" required>
+            </div>
+
+            <!-- כמות יעד -->
+            <div class="form-group">
+                <label class="form-label">כמות יעד (חובה)</label>
+                <div class="qty-picker">
+                    <button type="button" class="qty-step" onclick="Products.adjustTarget(-1)">−</button>
+                    <input type="number" id="reg-target" class="form-input form-input--qty" value="2" min="1" required>
+                    <button type="button" class="qty-step" onclick="Products.adjustTarget(1)">+</button>
+                </div>
+            </div>
+
+            <!-- כמות התחלתית -->
+            <div class="form-group">
+                <label class="form-label">כמות התחלתית</label>
+                <div class="qty-picker">
+                    <button type="button" class="qty-step" onclick="Products.adjustInitial(-1)">−</button>
+                    <input type="number" id="reg-initial" class="form-input form-input--qty" value="1" min="0">
+                    <button type="button" class="qty-step" onclick="Products.adjustInitial(1)">+</button>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="btn-save-product">💾 שמור מוצר</button>
+        </form>
+    </section>
+
+    <!-- ============================================= -->
+    <!-- מסך חוסרים מורחב — SHORTAGES                  -->
+    <!-- רשימה מלאה + סינון לפי מיקום                  -->
+    <!-- ============================================= -->
+    <section id="screen-shortages" class="screen">
+        <header class="screen-header">
+            <button class="back-btn" onclick="Router.navigate('home')">→ חזרה</button>
+            <h2 class="screen-header__title">⚠️ מוצרים חסרים</h2>
+        </header>
+
+        <!-- סינון לפי מיקום -->
+        <div class="filter-bar">
+            <button class="filter-btn active" data-filter="all" onclick="Shortages.filter('all')">הכל</button>
+            <button class="filter-btn" data-filter="fridge" onclick="Shortages.filter('fridge')">🧊 מקרר</button>
+            <button class="filter-btn" data-filter="freezer" onclick="Shortages.filter('freezer')">❄️ מקפיא</button>
+            <button class="filter-btn" data-filter="pantry" onclick="Shortages.filter('pantry')">🗄️ ארון</button>
+        </div>
+
+        <div id="shortages-list-full" class="shortages-list shortages-list--full">
+            <p class="empty-state" id="no-shortages-full">אין כרגע מוצרים חסרים ✓</p>
+        </div>
+    </section>
+
+    <!-- ============================================= -->
+    <!-- מסך פרטי מוצר — PRODUCT DETAIL                -->
+    <!-- תצוגה + תיקון ידני + עריכה                    -->
+    <!-- ============================================= -->
+    <section id="screen-product" class="screen">
+        <header class="screen-header">
+            <button class="back-btn" onclick="Router.back()">→ חזרה</button>
+            <h2 class="screen-header__title">📦 פרטי מוצר</h2>
+        </header>
+
+        <div class="product-detail">
+            <img id="detail-img" class="product-detail__img" src="" alt="תמונת מוצר">
+            <h3 id="detail-name" class="product-detail__name"></h3>
+            <p id="detail-barcode" class="product-detail__barcode"></p>
+            <p id="detail-location" class="product-detail__location"></p>
+
+            <div class="detail-qty-row">
+                <div class="detail-qty-box">
+                    <span class="detail-qty-label">נוכחי</span>
+                    <span class="detail-qty-value" id="detail-current">0</span>
+                </div>
+                <div class="detail-qty-box">
+                    <span class="detail-qty-label">יעד</span>
+                    <span class="detail-qty-value" id="detail-target">0</span>
+                </div>
+            </div>
+
+            <div class="detail-actions">
+                <button class="detail-btn" onclick="Inventory.manualAdjust(1)">+1</button>
+                <button class="detail-btn" onclick="Inventory.manualAdjust(-1)">-1</button>
+                <button class="detail-btn" onclick="Products.editTarget()">ערוך יעד</button>
+                <button class="detail-btn" onclick="Products.changePhoto()">החלף תמונה</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================= -->
+    <!-- מסך כל המוצרים — ALL PRODUCTS                 -->
+    <!-- ============================================= -->
+    <section id="screen-all-products" class="screen">
+        <header class="screen-header">
+            <button class="back-btn" onclick="Router.navigate('home')">→ חזרה</button>
+            <h2 class="screen-header__title">📋 כל המוצרים</h2>
+        </header>
+        <div id="all-products-list" class="products-grid">
+            <p class="empty-state" id="no-products">אין מוצרים רשומים עדיין</p>
+        </div>
+    </section>
+
+    <!-- ============================================= -->
+    <!-- מסך הגדרות תחנה — SETTINGS                    -->
+    <!-- ============================================= -->
+    <section id="screen-settings" class="screen">
+        <header class="screen-header">
+            <button class="back-btn" onclick="Router.navigate('home')">→ חזרה</button>
+            <h2 class="screen-header__title">⚙️ הגדרות תחנה</h2>
+        </header>
+        <div class="settings-form">
+            <div class="form-group">
+                <label class="form-label">מצב תחנה</label>
+                <div class="station-picker">
+                    <button class="station-btn" data-mode="entry" onclick="Config.setStationMode('entry')">📥 כניסה</button>
+                    <button class="station-btn" data-mode="exit" onclick="Config.setStationMode('exit')">📤 יציאה</button>
+                    <button class="station-btn active" data-mode="mixed" onclick="Config.setStationMode('mixed')">🔀 משולב</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">שם מכשיר</label>
+                <input type="text" id="device-name" class="form-input" placeholder="לדוגמה: טאבלט מטבח" onchange="Config.setDeviceName(this.value)">
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================= -->
+    <!-- באנר התקנת PWA — מוצג אוטומטית כשניתן להתקין  -->
+    <!-- ============================================= -->
+    <div id="pwa-install-banner" class="pwa-install-banner hidden">
+        <div class="pwa-install-banner__content">
+            <span class="pwa-install-banner__icon">📲</span>
+            <div class="pwa-install-banner__text">
+                <strong>התקן את מלאי המטבח</strong>
+                <p>גישה מהירה ישירות מהמסך</p>
+            </div>
+        </div>
+        <div class="pwa-install-banner__actions">
+            <button class="pwa-install-btn" id="btn-pwa-install" onclick="PWAInstall.install()">התקן</button>
+            <button class="pwa-dismiss-btn" onclick="PWAInstall.dismiss()">לא עכשיו</button>
+        </div>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- Toast — חיווי הצלחה/שגיאה                     -->
+    <!-- ============================================= -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- ============================================= -->
+    <!-- Scripts — טעינה מסודרת לפי תלויות             -->
+    <!-- ============================================= -->
+    <script src="scripts/config.js"></script>
+    <script src="scripts/store.js"></script>
+    <script src="scripts/api.js"></script>
+    <script src="scripts/sync.js"></script>
+    <script src="scripts/scanner.js"></script>
+    <script src="scripts/inventory.js"></script>
+    <script src="scripts/products.js"></script>
+    <script src="scripts/shortages.js"></script>
+    <script src="scripts/ui.js"></script>
+    <script src="scripts/router.js"></script>
+    <script src="scripts/pwa-install.js"></script>
+    <script src="scripts/app.js"></script>
+
+</body>
+</html>
