@@ -90,6 +90,14 @@ const Products = (() => {
         input.value = val;
     }
 
+    /* ---- שינוי כמות פריטים באריזה ---- */
+    function adjustPack(delta) {
+        const input = document.getElementById('reg-pack-size');
+        if (!input) return;
+        const val = Math.max(1, parseInt(input.value || '1') + delta);
+        input.value = val;
+    }
+
     /* ---- שימוש בשם מוצע ---- */
     function useSuggestedName() {
         const suggested = document.getElementById('reg-suggested-name').textContent;
@@ -107,6 +115,9 @@ const Products = (() => {
         const location = document.getElementById('reg-location').value;
         const targetQty = parseInt(document.getElementById('reg-target').value) || 2;
         const initialQty = parseInt(document.getElementById('reg-initial').value) || 1;
+        /* אריזות מרובות — כמות פריטים באריזה */
+        const packEl = document.getElementById('reg-pack-size');
+        const packSize = packEl ? (parseInt(packEl.value) || 1) : 1;
 
         /* ולידציה */
         if (!barcode) {
@@ -117,10 +128,15 @@ const Products = (() => {
             UI.toast('נדרש שם מוצר', 'error');
             return;
         }
-        /* תמונה — לא חובה אם הגיעה מ-API (תשאר ריקה) */
+        /* תמונה — לא חובה, אם אין — ניסיון חיפוש אוטומטי */
         if (!capturedImage) {
-            UI.toast('נדרשת תמונת מוצר — צלם או המתן', 'error');
-            return;
+            var foundImg = await ProductLookup.searchImage(displayName, barcode).catch(function() { return null; });
+            if (foundImg) {
+                capturedImage = foundImg;
+                _setApiImage(foundImg);
+                UI.toast('תמונה נמצאה אוטומטית!', 'success');
+            }
+            /* ממשיכים גם בלי תמונה — לא חוסמים */
         }
         if (!location) {
             UI.toast('נדרש לבחור מיקום', 'error');
@@ -138,30 +154,42 @@ const Products = (() => {
             return;
         }
 
+        /* זיהוי מוצרים דומים — הצגת התראה אם מוצר דומה כבר קיים */
+        const similarProducts = await _findSimilarProducts(displayName, location);
+        if (similarProducts.length > 0) {
+            const names = similarProducts.map(function(p) { return p.display_name; }).join(', ');
+            const goAhead = confirm('נמצאו מוצרים דומים במערכת:\n' + names + '\n\nלהמשיך ולהוסיף בכל זאת?');
+            if (!goAhead) return;
+        }
+
         /* תאריך תפוגה (אופציונלי) */
         const expiryDate = document.getElementById('reg-expiry').value || null;
+
+        /* כמות בפועל — אם אריזה מרובה, מכפילים */
+        const actualInitial = initialQty * packSize;
 
         /* יצירת מוצר */
         const product = {
             barcode: barcode,
             display_name: displayName,
             suggested_name: '',
-            image_url: capturedImage,
+            image_url: capturedImage || '',
             location_type: location,
             target_quantity: targetQty,
-            current_quantity: initialQty,
+            current_quantity: actualInitial,
+            pack_size: packSize,
             expiry_date: expiryDate
         };
 
         await Store.addProduct(product);
 
         /* רישום טרנזקציה ראשונית */
-        if (initialQty > 0) {
+        if (actualInitial > 0) {
             await Store.addTransaction({
                 product_id: product.id,
                 barcode: barcode,
                 action_type: 'stock_in',
-                quantity_delta: initialQty,
+                quantity_delta: actualInitial,
                 station_mode: Config.getStationMode(),
                 device_id: Config.getDeviceId()
             });
@@ -433,12 +461,60 @@ const Products = (() => {
     function _setApiImage(imageUrl) {
         capturedImage = imageUrl;
         const preview = document.getElementById('reg-preview');
-        preview.src = imageUrl;
-        preview.classList.remove('hidden');
-        document.getElementById('reg-camera').classList.add('hidden');
-        document.getElementById('btn-open-camera').textContent = '📷 צלם תמונה אחרת';
-        document.getElementById('btn-capture').classList.add('hidden');
-        document.getElementById('btn-retake').classList.remove('hidden');
+        if (preview) {
+            preview.src = imageUrl;
+            preview.classList.remove('hidden');
+        }
+        var cam = document.getElementById('reg-camera');
+        if (cam) cam.classList.add('hidden');
+        var btnOpen = document.getElementById('btn-open-camera');
+        if (btnOpen) btnOpen.textContent = '📷 צלם תמונה אחרת';
+        var btnCapture = document.getElementById('btn-capture');
+        if (btnCapture) btnCapture.classList.add('hidden');
+        var btnRetake = document.getElementById('btn-retake');
+        if (btnRetake) btnRetake.classList.remove('hidden');
+    }
+
+    /* ---- זיהוי מוצרים דומים לפי שם וקטגוריה ---- */
+    async function _findSimilarProducts(name, location) {
+        var allProducts = await Store.getAllProducts();
+        /* חילוץ מילות מפתח מהשם (ללא מותג) */
+        var cleanName = name.split(' - ')[0].trim().toLowerCase();
+        var keywords = cleanName.split(/\s+/).filter(function(w) { return w.length > 2; });
+        if (keywords.length === 0) return [];
+
+        /* מילון סוגי מוצרים — קיבוץ לוגי */
+        var typeMap = {
+            'דבש': 'דבש', 'טונה': 'טונה', 'חלב': 'חלב', 'יוגורט': 'יוגורט',
+            'קוטג': 'קוטג', 'גבינה': 'גבינה', 'שמנת': 'שמנת', 'חמאה': 'חמאה',
+            'קפה': 'קפה', 'תה': 'תה', 'מים': 'מים', 'קולה': 'קולה',
+            'שוקו': 'שוקו', 'מיץ': 'מיץ', 'ביסלי': 'ביסלי', 'במבה': 'במבה',
+            'נקניק': 'נקניקיות', 'שניצל': 'שניצל', 'המבורגר': 'המבורגר',
+            'מיונז': 'מיונז', 'קטשופ': 'קטשופ', 'סבון': 'סבון', 'אקונומיקה': 'אקונומיקה',
+            'כביסה': 'כביסה', 'לחם': 'לחם', 'פיתה': 'פיתות', 'אורז': 'אורז',
+            'פסטה': 'פסטה', 'ספגטי': 'פסטה', 'פנה': 'פסטה',
+            'שוקולד': 'שוקולד', 'גלידה': 'גלידה', 'ביצים': 'ביצים'
+        };
+
+        /* מציאת סוג המוצר */
+        var productType = null;
+        for (var key in typeMap) {
+            if (cleanName.indexOf(key) !== -1) { productType = typeMap[key]; break; }
+        }
+
+        return allProducts.filter(function(p) {
+            if (!p.display_name) return false;
+            var pClean = p.display_name.split(' - ')[0].trim().toLowerCase();
+            /* התאמה לפי סוג מוצר */
+            if (productType) {
+                for (var k in typeMap) {
+                    if (pClean.indexOf(k) !== -1 && typeMap[k] === productType) return true;
+                }
+            }
+            /* התאמה לפי מילות מפתח (לפחות 2 מילים משותפות) */
+            var matches = keywords.filter(function(w) { return pClean.indexOf(w) !== -1; });
+            return matches.length >= 2;
+        });
     }
 
     /* ---- ייצוא פומבי ---- */
@@ -449,6 +525,7 @@ const Products = (() => {
         setLocation,
         adjustTarget,
         adjustInitial,
+        adjustPack,
         useSuggestedName,
         register,
         loadDetail,

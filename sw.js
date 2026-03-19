@@ -4,7 +4,7 @@
    סנכרון ברקע כשהרשת חוזרת
    =================================================== */
 
-const CACHE_NAME = 'kitchen-inventory-v7';
+const CACHE_NAME = 'kitchen-inventory-v9';
 
 /* רשימת קבצים סטטיים לשמירה ב-cache */
 const STATIC_ASSETS = [

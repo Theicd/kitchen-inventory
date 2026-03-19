@@ -17,10 +17,11 @@ const PWAInstall = (() => {
             deferredPrompt = e;
             console.log('[PWA] beforeinstallprompt זמין');
 
-            /* הצגת באנר אם לא נסגר */
+            /* הצגת באנר + כפתור במסך הבית */
             if (!dismissed && !_isStandalone()) {
                 _showBanner();
             }
+            _showHomeButton();
         });
 
         /* כשהאפליקציה כבר מותקנת */
@@ -34,6 +35,7 @@ const PWAInstall = (() => {
         /* בדיקת iOS — אין beforeinstallprompt */
         if (_isIOS() && !_isStandalone()) {
             setTimeout(() => _showIOSBanner(), 2000);
+            _showHomeButton();
         }
 
         /* בדיקה אם כבר ב-standalone */
@@ -78,6 +80,13 @@ const PWAInstall = (() => {
         if (banner) {
             banner.classList.remove('hidden');
         }
+    }
+
+    /* ---- הצגת כפתור התקנה במסך הבית ---- */
+    function _showHomeButton() {
+        if (_isStandalone()) return;
+        const btn = document.getElementById('pwa-home-install');
+        if (btn) btn.classList.remove('hidden');
     }
 
     /* ---- הסתרת באנר ---- */

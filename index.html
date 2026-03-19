@@ -56,6 +56,13 @@
             </div>
         </div>
 
+        <!-- כפתור התקנת PWA בולט במסך הבית -->
+        <div id="pwa-home-install" class="pwa-home-install hidden">
+            <button class="pwa-home-btn" onclick="PWAInstall.install()">
+                📲 התקן את האפליקציה
+            </button>
+        </div>
+
         <!-- כפתור ניהול מוצרים -->
         <footer class="home-footer">
             <button class="link-btn" onclick="Router.navigate('all-products')">📋 כל המוצרים</button>
@@ -166,7 +173,7 @@
 
             <!-- צילום תמונה -->
             <div class="form-group">
-                <label class="form-label">תמונת מוצר (חובה)</label>
+                <label class="form-label">תמונת מוצר (אופציונלי — תחופש אוטומטית)</label>
                 <div class="photo-area" id="reg-photo-area">
                     <video id="reg-camera" class="reg-camera hidden" autoplay playsinline></video>
                     <img id="reg-preview" class="reg-preview hidden" alt="תצוגה מקדימה">
@@ -223,6 +230,17 @@
                     <button type="button" class="expiry-quick-btn" onclick="Products.setQuickExpiry(30)">חודש</button>
                     <button type="button" class="expiry-quick-btn" onclick="Products.setQuickExpiry(90)">3 חודשים</button>
                 </div>
+            </div>
+
+            <!-- אריזה מרובה — כמה פריטים באריזה -->
+            <div class="form-group" id="reg-pack-group">
+                <label class="form-label">📦 אריזה מרובה? (לדוגמה: 6 קופסאות טונה)</label>
+                <div class="qty-picker">
+                    <button type="button" class="qty-step" onclick="Products.adjustPack(-1)">−</button>
+                    <input type="number" id="reg-pack-size" class="form-input form-input--qty" value="1" min="1">
+                    <button type="button" class="qty-step" onclick="Products.adjustPack(1)">+</button>
+                </div>
+                <p class="form-hint">אם זו אריזה של כמה פריטים, ציין את הכמות. 1 = מוצר בודד</p>
             </div>
 
             <!-- כמות התחלתית -->

@@ -291,3 +291,93 @@
     color: var(--text-muted);
     margin-top: 0.3rem;
 }
+
+/* ---- כפתור התקנת PWA במסך הבית ---- */
+.pwa-home-install {
+    text-align: center;
+    margin: 1rem 0;
+}
+
+.pwa-home-btn {
+    width: 100%;
+    padding: 0.9rem 1.2rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    border-radius: var(--radius-md);
+    background: linear-gradient(145deg, rgba(88, 166, 255, 0.25), rgba(88, 166, 255, 0.08));
+    color: var(--accent-cyan, #58a6ff);
+    border: 1px solid rgba(88, 166, 255, 0.3);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 4px 24px rgba(88, 166, 255, 0.12);
+    transition: transform 0.2s, box-shadow 0.3s;
+}
+
+.pwa-home-btn:active {
+    transform: scale(0.97);
+}
+
+/* ---- באנר התקנת PWA תחתון ---- */
+.pwa-install-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-secondary, #1e1e1e);
+    border-top: 1px solid rgba(88, 166, 255, 0.2);
+    padding: 0.75rem 1rem;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+.pwa-install-banner.hidden { display: none; }
+
+.pwa-install-banner__content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.pwa-install-banner__icon { font-size: 1.5rem; }
+
+.pwa-install-banner__text strong {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text-primary, #e0e0e0);
+}
+
+.pwa-install-banner__text p {
+    font-size: 0.75rem;
+    color: var(--text-muted, #888);
+    margin: 0;
+}
+
+.pwa-install-banner__actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.pwa-install-btn {
+    padding: 0.5rem 1rem;
+    background: rgba(88, 166, 255, 0.2);
+    color: var(--accent-cyan, #58a6ff);
+    border: 1px solid rgba(88, 166, 255, 0.3);
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.pwa-dismiss-btn {
+    padding: 0.5rem 0.75rem;
+    background: transparent;
+    color: var(--text-muted, #888);
+    border: 1px solid var(--glass-border, rgba(255,255,255,0.08));
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+}

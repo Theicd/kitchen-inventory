@@ -147,6 +147,46 @@ const ProductLookup = (() => {
         });
     }
 
+    /* ---- חיפוש תמונה לפי שם מוצר — כשברקוד מזוהה אבל אין תמונה ---- */
+    async function searchImage(productName, barcode) {
+        if (!productName) return null;
+        console.log('[Lookup] מחפש תמונה עבור:', productName);
+
+        /* 1: ניסיון OFF search לפי שם (מוצרים ישראליים) */
+        try {
+            const q = encodeURIComponent(productName.split(' - ')[0].trim());
+            const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${q}&tagtype_0=countries&tag_contains_0=contains&tag_0=israel&page_size=5&fields=code,image_front_small_url,image_front_url&json=1`;
+            const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+            if (res.ok) {
+                const json = await res.json();
+                const products = (json.products || []);
+                for (var i = 0; i < products.length; i++) {
+                    var img = products[i].image_front_small_url || products[i].image_front_url;
+                    if (img) {
+                        console.log('[Lookup] תמונה נמצאה ב-OFF search:', img);
+                        /* שמירה ב-cache */
+                        if (barcode) {
+                            var cached = _getCache()[barcode];
+                            if (cached) { cached.image = img; _setCache(barcode, cached); }
+                        }
+                        return img;
+                    }
+                }
+            }
+        } catch (e) { console.warn('[Lookup] OFF search failed:', e.message); }
+
+        /* 2: ניסיון CDN סופרמרקטים */
+        if (barcode) {
+            try {
+                var cdnImg = await _tryImageCDN(barcode);
+                if (cdnImg) return cdnImg;
+            } catch (e) {}
+        }
+
+        console.log('[Lookup] לא נמצאה תמונה עבור:', productName);
+        return null;
+    }
+
     /* ---- קריאה ל-Open Food Facts API ---- */
     async function _fetchOpenFoodFacts(barcode) {
         console.log('[Lookup] מחפש ב-Open Food Facts:', barcode);
@@ -168,5 +208,5 @@ const ProductLookup = (() => {
     }
 
     /* ---- ייצוא פומבי ---- */
-    return { lookup };
+    return { lookup, searchImage };
 })();
